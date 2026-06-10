@@ -1,10 +1,31 @@
+import { RouterProvider } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { router } from '@/router'
+import { useAuthStore } from '@/store/authStore'
+import apiClient from '@/api/client'
+import type { User } from '@/types'
+
 export default function App() {
-  return (
-    <div className="flex h-screen items-center justify-center bg-gray-950 text-white">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight">Catalyst</h1>
-        <p className="mt-2 text-gray-400">Frontend is live.</p>
+  const setUser = useAuthStore((s) => s.setUser)
+
+  const { isLoading } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const res = await apiClient.get<User>('/auth/me/')
+      setUser(res.data)
+      return res.data
+    },
+    retry: false,
+    staleTime: Infinity,
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
       </div>
-    </div>
-  )
+    )
+  }
+
+  return <RouterProvider router={router} />
 }

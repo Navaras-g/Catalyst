@@ -22,11 +22,17 @@ const processQueue = (error: unknown) => {
     failedQueue = []
 }
 
+const skipRefreshUrls = ['/auth/token/refresh/', '/auth/login/', '/auth/register/']
+
 apiClient.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        const isSkipped = skipRefreshUrls.some((url) =>
+            originalRequest.url?.includes(url)
+        )
+
+        if (error.response?.status === 401 && !originalRequest._retry && !isSkipped) {
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject })
@@ -34,20 +40,22 @@ apiClient.interceptors.response.use(
                     .then(() => apiClient(originalRequest))
                     .catch((err) => Promise.reject(err))
             }
+
             originalRequest._retry = true
             isRefreshing = true
+
             try {
                 await apiClient.post('/auth/token/refresh/')
                 processQueue(null)
                 return apiClient(originalRequest)
             } catch (refreshError) {
                 processQueue(refreshError)
-                window.location.href = '/login'
                 return Promise.reject(refreshError)
             } finally {
                 isRefreshing = false
             }
         }
+
         return Promise.reject(error)
     }
 )
