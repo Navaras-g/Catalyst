@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import LoginPage from '@/features/auth/LoginPage'
 import RegisterPage from '@/features/auth/RegisterPage'
+import AppLayout from '@/components/layout/AppLayout'
 
 function ProtectedRoute() {
     const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -14,8 +15,8 @@ function PublicRoute() {
 }
 
 const Placeholder = ({ title }: { title: string }) => (
-    <div className="flex h-screen items-center justify-center text-2xl font-semibold text-gray-400">
-        {title}
+    <div className="flex h-full items-center justify-center text-2xl font-semibold text-gray-600">
+        {title} — coming soon
     </div>
 )
 
@@ -30,13 +31,18 @@ export const router = createBrowserRouter([
     {
         element: <ProtectedRoute />,
         children: [
-            { path: '/dashboard', element: <Placeholder title="Dashboard" /> },
-            { path: '/tasks', element: <Placeholder title="Tasks" /> },
-            { path: '/projects', element: <Placeholder title="Projects" /> },
-            { path: '/focus', element: <Placeholder title="Focus" /> },
-            { path: '/habits', element: <Placeholder title="Habits" /> },
+            {
+                element: <AppLayout />,
+                children: [
+                    { path: '/dashboard', element: <Placeholder title="Dashboard" /> },
+                    { path: '/tasks', element: <Placeholder title="Tasks" /> },
+                    { path: '/projects', element: <Placeholder title="Projects" /> },
+                    { path: '/focus', element: <Placeholder title="Focus" /> },
+                    { path: '/habits', element: <Placeholder title="Habits" /> },
+                ],
+            },
         ],
     },
     { path: '/', element: <Navigate to="/dashboard" replace /> },
-    { path: '*', element: <Placeholder title="404 — Not Found" /> },
+    { path: '*', element: <Placeholder title="404" /> },
 ])
