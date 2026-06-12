@@ -6,6 +6,7 @@ import AppLayout from '@/components/layout/AppLayout'
 import DashboardPage from '@/features/dashboard/DashboardPage'
 import TasksPage from '@/features/tasks/TaskPage'
 import ProjectsPage from '@/features/projects/ProjectsPage'
+import FocusPage from '@/features/focus/FocusPage'
 
 function ProtectedRoute() {
     const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -40,7 +41,7 @@ export const router = createBrowserRouter([
                     { path: '/dashboard', element: <DashboardPage /> },
                     { path: '/tasks', element: <TasksPage /> },
                     { path: '/projects', element: <ProjectsPage /> },
-                    { path: '/focus', element: <Placeholder title="Focus" /> },
+                    { path: '/focus', element: <FocusPage /> },
                     { path: '/habits', element: <Placeholder title="Habits" /> },
                 ],
             },
