@@ -120,7 +120,10 @@ export default function ProjectsPage() {
 
     const deleteProject = useMutation({
         mutationFn: (id: number) => projectApi.delete(id),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['projects'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+        },
     })
 
     const handleEdit = (project: Project) => {

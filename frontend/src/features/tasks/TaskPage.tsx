@@ -235,12 +235,16 @@ export default function TasksPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] })
             queryClient.invalidateQueries({ queryKey: ['projects'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
         },
     })
 
     const deleteTask = useMutation({
         mutationFn: (id: number) => taskApi.delete(id),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+        },
     })
 
     const handleEdit = (task: Task) => {
