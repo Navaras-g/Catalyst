@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { taskApi } from './taskApi'
 import type { Task } from './taskApi'
+import { projectApi } from '@/features/projects/projectApi'
 import { cn } from '@/lib/utils'
 
 const taskSchema = z.object({
@@ -17,6 +18,7 @@ const taskSchema = z.object({
     due_date: z.string().optional(),
     estimated_minutes: z.number().nullable().optional(),
     category: z.number().nullable().optional(),
+    project: z.number().nullable().optional(),
 })
 
 type TaskForm = z.infer<typeof taskSchema>
@@ -35,6 +37,11 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
         queryFn: taskApi.getCategories,
     })
 
+    const { data: projects = [] } = useQuery({
+        queryKey: ['projects'],
+        queryFn: projectApi.list,
+    })
+
     const {
         register,
         handleSubmit,
@@ -50,6 +57,7 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
             due_date: '',
             estimated_minutes: null,
             category: null,
+            project: null,
         },
     })
 
@@ -63,6 +71,7 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
                 due_date: editingTask.due_date || '',
                 estimated_minutes: editingTask.estimated_minutes,
                 category: editingTask.category ?? null,
+                project: editingTask.project ?? null,
             })
         } else {
             reset({
@@ -73,6 +82,7 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
                 due_date: '',
                 estimated_minutes: null,
                 category: null,
+                project: null,
             })
         }
     }, [editingTask, reset])
@@ -91,6 +101,7 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
             taskApi.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] })
+            queryClient.invalidateQueries({ queryKey: ['projects'] })
             onClose()
         },
     })
@@ -214,23 +225,41 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
                                 </div>
                             </div>
 
-                            {/* Category */}
-                            {categories.length > 0 && (
-                                <div>
-                                    <label className={labelClass}>Category</label>
-                                    <select
-                                        {...register('category', {
-                                            setValueAs: (v) => (v === '' ? null : Number(v)),
-                                        })}
-                                        className={inputClass}
-                                    >
-                                        <option value="">No category</option>
-                                        {categories.map((c) => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
+                            {/* Category + Project */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {categories.length > 0 && (
+                                    <div>
+                                        <label className={labelClass}>Category</label>
+                                        <select
+                                            {...register('category', {
+                                                setValueAs: (v) => (v === '' ? null : Number(v)),
+                                            })}
+                                            className={inputClass}
+                                        >
+                                            <option value="">No category</option>
+                                            {categories.map((c) => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                                {projects.length > 0 && (
+                                    <div>
+                                        <label className={labelClass}>Project</label>
+                                        <select
+                                            {...register('project', {
+                                                setValueAs: (v) => (v === '' ? null : Number(v)),
+                                            })}
+                                            className={inputClass}
+                                        >
+                                            <option value="">No project</option>
+                                            {projects.map((p) => (
+                                                <option key={p.id} value={p.id}>{p.title}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Actions */}
                             <div className="flex justify-end gap-3 pt-2">

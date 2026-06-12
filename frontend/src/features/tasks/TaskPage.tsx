@@ -232,7 +232,10 @@ export default function TasksPage() {
     const updateTask = useMutation({
         mutationFn: ({ id, data }: { id: number; data: any }) =>
             taskApi.update(id, data),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] })
+            queryClient.invalidateQueries({ queryKey: ['projects'] })
+        },
     })
 
     const deleteTask = useMutation({
