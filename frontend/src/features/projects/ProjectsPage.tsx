@@ -17,11 +17,7 @@ const statusConfig: Record<ProjectStatus, { label: string; color: string; bg: st
     completed: { label: 'Completed', color: 'text-gray-400', bg: 'bg-gray-500/10' },
 }
 
-function ProjectCard({
-    project,
-    onEdit,
-    onDelete,
-}: {
+function ProjectCard({ project, onEdit, onDelete }: {
     project: Project
     onEdit: (p: Project) => void
     onDelete: (id: number) => void
@@ -34,72 +30,87 @@ function ProjectCard({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            className="group rounded-2xl border border-white/5 bg-gray-900 p-5 transition hover:border-white/10"
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className="group relative overflow-hidden rounded-2xl p-5"
+            style={{
+                background: 'rgba(10,22,40,0.8)',
+                border: '1px solid rgba(99,179,255,0.08)',
+            }}
+            onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,130,255,0.18)'
+                    ; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(59,130,246,0.1)'
+            }}
+            onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,179,255,0.08)'
+                    ; (e.currentTarget as HTMLElement).style.boxShadow = 'none'
+            }}
         >
-            {/* Top row */}
-            <div className="mb-4 flex items-start justify-between">
+            {/* Top color accent */}
+            <div className="absolute top-0 left-0 right-0 h-px"
+                style={{ background: `linear-gradient(90deg, ${project.color}, transparent)` }}
+            />
+            <div className="absolute -top-10 -right-10 h-28 w-28 rounded-full opacity-10 blur-2xl"
+                style={{ background: project.color }}
+            />
+
+            <div className="relative mb-4 flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <div
-                        className="h-3 w-3 rounded-full shrink-0"
-                        style={{ backgroundColor: project.color }}
+                    <div className="h-3 w-3 rounded-full shrink-0"
+                        style={{ background: project.color, boxShadow: `0 0 8px ${project.color}60` }}
                     />
                     <h3 className="font-semibold text-white">{project.title}</h3>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
-                    <button
-                        onClick={() => onEdit(project)}
-                        className="rounded-lg p-1.5 text-gray-500 transition hover:bg-white/5 hover:text-white"
+                    <button onClick={() => onEdit(project)}
+                        className="rounded-lg p-1.5 transition"
+                        style={{ color: '#3a5070' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = '#6b89b4'; e.currentTarget.style.background = 'rgba(99,130,255,0.08)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = '#3a5070'; e.currentTarget.style.background = 'transparent' }}
                     >
                         <Pencil size={14} />
                     </button>
-                    <button
-                        onClick={() => onDelete(project.id)}
-                        className="rounded-lg p-1.5 text-gray-500 transition hover:bg-red-500/10 hover:text-red-400"
+                    <button onClick={() => onDelete(project.id)}
+                        className="rounded-lg p-1.5 transition"
+                        style={{ color: '#3a5070' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.background = 'rgba(239,68,68,0.08)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = '#3a5070'; e.currentTarget.style.background = 'transparent' }}
                     >
                         <Trash2 size={14} />
                     </button>
                 </div>
             </div>
 
-            {/* Description */}
             {project.description && (
-                <p className="mb-4 text-sm text-gray-500 line-clamp-2">{project.description}</p>
+                <p className="mb-4 text-sm line-clamp-2" style={{ color: '#3a5070' }}>{project.description}</p>
             )}
 
-            {/* Progress bar */}
-            <div className="mb-3">
+            <div className="mb-3 relative">
                 <div className="mb-1.5 flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Progress</span>
-                    <span className="font-medium text-white">{project.progress}%</span>
+                    <span style={{ color: '#3a5070' }}>Progress</span>
+                    <span className="font-semibold text-white">{project.progress}%</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-800">
+                <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: 'rgba(99,130,255,0.08)' }}>
                     <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${project.progress}%` }}
-                        transition={{ duration: 0.8 }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
                         className="h-full rounded-full"
-                        style={{ backgroundColor: project.color }}
+                        style={{ background: `linear-gradient(90deg, ${project.color}, ${project.color}aa)` }}
                     />
                 </div>
             </div>
 
-            {/* Footer */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                        <CheckCircle2 size={12} />
-                        {project.completed_task_count}/{project.task_count} tasks
-                    </span>
-                    {project.due_date && (
-                        <span className="flex items-center gap-1">
-                            <Clock size={12} />
-                            {new Date(project.due_date).toLocaleDateString('en-US', {
-                                month: 'short', day: 'numeric'
-                            })}
-                        </span>
-                    )}
-                </div>
-                <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-medium', s.bg, s.color)}>
+                <span className="text-xs" style={{ color: '#3a5070' }}>
+                    {project.completed_task_count}/{project.task_count} tasks
+                </span>
+                <span className="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                    style={{
+                        background: s.color === 'text-green-400' ? 'rgba(16,185,129,0.1)' : s.color === 'text-yellow-400' ? 'rgba(234,179,8,0.1)' : 'rgba(107,114,128,0.1)',
+                        color: s.color === 'text-green-400' ? '#34d399' : s.color === 'text-yellow-400' ? '#fbbf24' : '#9ca3af',
+                        border: `1px solid ${s.color === 'text-green-400' ? 'rgba(16,185,129,0.2)' : s.color === 'text-yellow-400' ? 'rgba(234,179,8,0.2)' : 'rgba(107,114,128,0.2)'}`,
+                    }}
+                >
                     {s.label}
                 </span>
             </div>

@@ -47,12 +47,7 @@ function HabitHeatmap({ habit }: { habit: Habit }) {
 }
 
 // ─── Habit Card ───────────────────────────────────────────────────────────────
-function HabitCard({
-    habit,
-    onLog,
-    onEdit,
-    onDelete,
-}: {
+function HabitCard({ habit, onLog, onEdit, onDelete }: {
     habit: Habit
     onLog: (id: number) => void
     onEdit: (h: Habit) => void
@@ -64,85 +59,88 @@ function HabitCard({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            className="group rounded-2xl border border-white/5 bg-gray-900 p-5 transition hover:border-white/10"
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className="group relative overflow-hidden rounded-2xl p-5"
+            style={{
+                background: 'rgba(10,22,40,0.8)',
+                border: `1px solid ${habit.completed_today ? habit.color + '30' : 'rgba(99,179,255,0.08)'}`,
+            }}
         >
-            {/* Top row */}
-            <div className="mb-4 flex items-start justify-between">
+            <div className="absolute top-0 left-0 right-0 h-px"
+                style={{ background: `linear-gradient(90deg, ${habit.color}60, transparent)` }}
+            />
+            <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full opacity-10 blur-2xl"
+                style={{ background: habit.color }}
+            />
+
+            <div className="relative mb-4 flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <div
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl"
-                        style={{ backgroundColor: habit.color + '20' }}
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl"
+                        style={{ background: habit.color + '20', border: `1px solid ${habit.color}30` }}
                     >
                         {habit.icon}
                     </div>
                     <div>
                         <h3 className="font-semibold text-white">{habit.title}</h3>
                         {habit.description && (
-                            <p className="text-xs text-gray-500">{habit.description}</p>
+                            <p className="text-xs" style={{ color: '#3a5070' }}>{habit.description}</p>
                         )}
                     </div>
                 </div>
 
                 <div className="flex items-center gap-1">
-                    {/* Check off button */}
-                    <button
+                    <motion.button
                         onClick={() => onLog(habit.id)}
-                        className={cn(
-                            'rounded-xl p-2 transition',
-                            habit.completed_today
-                                ? 'text-green-400 hover:bg-green-500/10'
-                                : 'text-gray-600 hover:bg-white/5 hover:text-white'
-                        )}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="rounded-xl p-2 transition-all"
+                        style={{
+                            background: habit.completed_today ? habit.color + '20' : 'rgba(99,130,255,0.05)',
+                            border: `1px solid ${habit.completed_today ? habit.color + '40' : 'rgba(99,130,255,0.08)'}`,
+                            color: habit.completed_today ? habit.color : '#3a5070',
+                            boxShadow: habit.completed_today ? `0 0 12px ${habit.color}30` : 'none',
+                        }}
                     >
-                        {habit.completed_today
-                            ? <CheckCircle2 size={22} />
-                            : <Circle size={22} />
-                        }
-                    </button>
+                        {habit.completed_today ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                    </motion.button>
 
-                    <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
-                        <button
-                            onClick={() => onEdit(habit)}
-                            className="rounded-lg p-1.5 text-gray-500 transition hover:bg-white/5 hover:text-white"
+                    <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100 ml-1">
+                        <button onClick={() => onEdit(habit)}
+                            className="rounded-lg p-1.5 transition"
+                            style={{ color: '#3a5070' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = '#6b89b4' }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = '#3a5070' }}
                         >
-                            <Pencil size={14} />
+                            <Pencil size={13} />
                         </button>
-                        <button
-                            onClick={() => onDelete(habit.id)}
-                            className="rounded-lg p-1.5 text-gray-500 transition hover:bg-red-500/10 hover:text-red-400"
+                        <button onClick={() => onDelete(habit.id)}
+                            className="rounded-lg p-1.5 transition"
+                            style={{ color: '#3a5070' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = '#f87171' }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = '#3a5070' }}
                         >
-                            <Trash2 size={14} />
+                            <Trash2 size={13} />
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Stats row */}
-            <div className="mb-4 grid grid-cols-3 gap-3">
-                <div className="rounded-xl bg-gray-800/50 px-3 py-2 text-center">
-                    <div className="flex items-center justify-center gap-1 text-orange-400">
-                        <Flame size={13} />
-                        <span className="text-sm font-bold">{habit.current_streak}</span>
+            {/* Stats */}
+            <div className="relative mb-4 grid grid-cols-3 gap-2">
+                {[
+                    { value: habit.current_streak, label: 'Streak', color: '#f97316' },
+                    { value: habit.longest_streak, label: 'Best', color: '#fbbf24' },
+                    { value: `${habit.completion_rate}%`, label: 'Rate', color: '#818cf8' },
+                ].map(({ value, label, color }) => (
+                    <div key={label} className="rounded-xl p-2 text-center"
+                        style={{ background: 'rgba(15,31,61,0.6)', border: '1px solid rgba(99,130,255,0.06)' }}
+                    >
+                        <p className="text-sm font-bold" style={{ color }}>{value}</p>
+                        <p className="text-xs" style={{ color: '#3a5070' }}>{label}</p>
                     </div>
-                    <p className="mt-0.5 text-xs text-gray-500">Streak</p>
-                </div>
-                <div className="rounded-xl bg-gray-800/50 px-3 py-2 text-center">
-                    <div className="flex items-center justify-center gap-1 text-yellow-400">
-                        <Trophy size={13} />
-                        <span className="text-sm font-bold">{habit.longest_streak}</span>
-                    </div>
-                    <p className="mt-0.5 text-xs text-gray-500">Best</p>
-                </div>
-                <div className="rounded-xl bg-gray-800/50 px-3 py-2 text-center">
-                    <div className="flex items-center justify-center gap-1 text-indigo-400">
-                        <TrendingUp size={13} />
-                        <span className="text-sm font-bold">{habit.completion_rate}%</span>
-                    </div>
-                    <p className="mt-0.5 text-xs text-gray-500">Rate</p>
-                </div>
+                ))}
             </div>
 
-            {/* Heatmap */}
             <HabitHeatmap habit={habit} />
         </motion.div>
     )

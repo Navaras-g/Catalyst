@@ -1,19 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
-    CheckSquare,
-    FolderKanban,
-    Flame,
-    Clock,
-    TrendingUp,
-    Calendar,
-    Zap,
+    CheckSquare, FolderKanban, Flame, Clock,
+    ChevronRight,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import apiClient from '@/api/client'
 import Header from '@/components/layout/Header'
+import { useNavigate } from 'react-router-dom'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface DashboardStats {
     tasks_due_today: number
     tasks_completed_this_week: number
@@ -24,19 +19,16 @@ interface DashboardStats {
     habits_total: number
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 function getGreeting() {
-    const hour = new Date().getHours()
-    if (hour < 12) return 'Good morning'
-    if (hour < 17) return 'Good afternoon'
+    const h = new Date().getHours()
+    if (h < 12) return 'Good morning'
+    if (h < 17) return 'Good afternoon'
     return 'Good evening'
 }
 
 function getFormattedDate() {
     return new Date().toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
+        weekday: 'long', month: 'long', day: 'numeric',
     })
 }
 
@@ -45,56 +37,43 @@ function formatMinutes(mins: number) {
     return `${Math.floor(mins / 60)}h ${mins % 60}m`
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
-interface StatCardProps {
+function StatCard({
+    label, value, sub, gradient, delay,
+}: {
     label: string
     value: string | number
     sub?: string
-    icon: React.ReactNode
-    color: string
+    gradient: string
     delay: number
-}
-
-function StatCard({ label, value, sub, icon, color, delay }: StatCardProps) {
+}) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay }}
-            className="rounded-2xl border border-white/5 bg-gray-900 p-5"
+            transition={{ duration: 0.5, delay }}
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className="relative overflow-hidden rounded-2xl p-5"
+            style={{
+                background: 'rgba(10,22,40,0.8)',
+                border: '1px solid rgba(99,179,255,0.08)',
+            }}
         >
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-sm text-gray-500">{label}</p>
-                    <p className="mt-1 text-3xl font-bold text-white">{value}</p>
-                    {sub && <p className="mt-1 text-xs text-gray-500">{sub}</p>}
-                </div>
-                <div className={`rounded-xl p-2.5 ${color}`}>
-                    {icon}
-                </div>
-            </div>
+            {/* Gradient accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-px" style={{ background: gradient }} />
+            {/* Subtle glow */}
+            <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full opacity-20 blur-2xl"
+                style={{ background: gradient }} />
+
+            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#3a5070' }}>{label}</p>
+            <p className="mt-2 text-4xl font-bold text-white">{value}</p>
+            {sub && <p className="mt-1 text-xs" style={{ color: '#3a5070' }}>{sub}</p>}
         </motion.div>
     )
 }
 
-// ─── Empty State ──────────────────────────────────────────────────────────────
-function EmptyActivity() {
-    return (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-3 rounded-full bg-gray-800 p-4">
-                <Zap size={24} className="text-gray-600" />
-            </div>
-            <p className="text-sm font-medium text-gray-400">No activity yet</p>
-            <p className="mt-1 text-xs text-gray-600">
-                Complete tasks and habits to see your progress here
-            </p>
-        </div>
-    )
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 export default function DashboardPage() {
     const user = useAuthStore((s) => s.user)
+    const navigate = useNavigate()
 
     const { data: stats, isLoading } = useQuery({
         queryKey: ['dashboard-stats'],
@@ -102,7 +81,7 @@ export default function DashboardPage() {
             const res = await apiClient.get<DashboardStats>('/dashboard/stats/')
             return res.data
         },
-        refetchInterval: 1000 * 60, // refresh every minute
+        refetchInterval: 60000,
     })
 
     const statCards = [
@@ -110,184 +89,240 @@ export default function DashboardPage() {
             label: 'Due Today',
             value: isLoading ? '—' : (stats?.tasks_due_today ?? 0),
             sub: 'tasks remaining',
-            icon: <CheckSquare size={20} className="text-blue-400" />,
-            color: 'bg-blue-500/10',
+            gradient: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
             delay: 0.1,
         },
         {
             label: 'Completed',
             value: isLoading ? '—' : (stats?.tasks_completed_this_week ?? 0),
-            sub: 'tasks this week',
-            icon: <TrendingUp size={20} className="text-green-400" />,
-            color: 'bg-green-500/10',
+            sub: 'this week',
+            gradient: 'linear-gradient(90deg, #10b981, #34d399)',
             delay: 0.2,
         },
         {
-            label: 'Active Projects',
+            label: 'Projects',
             value: isLoading ? '—' : (stats?.active_projects ?? 0),
-            sub: 'in progress',
-            icon: <FolderKanban size={20} className="text-purple-400" />,
-            color: 'bg-purple-500/10',
+            sub: 'active',
+            gradient: 'linear-gradient(90deg, #8b5cf6, #a78bfa)',
             delay: 0.3,
         },
         {
-            label: 'Focus Today',
+            label: 'Focus',
             value: isLoading ? '—' : formatMinutes(stats?.total_focus_minutes_today ?? 0),
-            sub: 'deep work',
-            icon: <Clock size={20} className="text-orange-400" />,
-            color: 'bg-orange-500/10',
+            sub: 'today',
+            gradient: 'linear-gradient(90deg, #f97316, #fb923c)',
             delay: 0.4,
         },
     ]
 
-    const quickLinks = [
-        { label: 'Add Task', icon: CheckSquare, color: 'text-blue-400', bg: 'bg-blue-500/10', to: '/tasks' },
-        { label: 'New Project', icon: FolderKanban, color: 'text-purple-400', bg: 'bg-purple-500/10', to: '/projects' },
-        { label: 'Start Focus', icon: Clock, color: 'text-orange-400', bg: 'bg-orange-500/10', to: '/focus' },
-        { label: 'Log Habit', icon: Flame, color: 'text-green-400', bg: 'bg-green-500/10', to: '/habits' },
+    const quickAccess = [
+        { label: 'Add Task', icon: CheckSquare, gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)', to: '/tasks' },
+        { label: 'New Project', icon: FolderKanban, gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)', to: '/projects' },
+        { label: 'Start Focus', icon: Clock, gradient: 'linear-gradient(135deg, #f97316, #fb923c)', to: '/focus' },
+        { label: 'Log Habit', icon: Flame, gradient: 'linear-gradient(135deg, #10b981, #34d399)', to: '/habits' },
     ]
 
     return (
         <div className="flex flex-col h-full">
-            <Header
-                title="Dashboard"
-                subtitle={getFormattedDate()}
-            />
+            <Header title="Dashboard" subtitle={getFormattedDate()} />
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
-                {/* Greeting */}
+                {/* Hero greeting */}
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative overflow-hidden rounded-2xl p-6"
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(99,102,241,0.08) 50%, rgba(139,92,246,0.05) 100%)',
+                        border: '1px solid rgba(99,130,255,0.1)',
+                    }}
                 >
-                    <h2 className="text-2xl font-bold text-white">
-                        {getGreeting()},{' '}
-                        <span className="text-indigo-400">
-                            {user?.first_name || user?.username || 'Guest'}
-                        </span>{' '}
-                        👋
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Here's what's on your plate today.
-                    </p>
+                    {/* Decorative glow */}
+                    <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full blur-3xl opacity-20"
+                        style={{ background: 'radial-gradient(circle, #6366f1, transparent)' }} />
+                    <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full blur-3xl opacity-10"
+                        style={{ background: 'radial-gradient(circle, #3b82f6, transparent)' }} />
+
+                    <div className="relative">
+                        <h2 className="text-2xl font-bold text-white">
+                            {getGreeting()},{' '}
+                            <span className="gradient-text">{user?.first_name || user?.username}</span>
+                        </h2>
+                        <p className="mt-1 text-sm" style={{ color: '#6b89b4' }}>
+                            Here's what's happening in your universe today.
+                        </p>
+                    </div>
                 </motion.div>
 
-                {/* Stat Cards */}
+                {/* Stat cards */}
                 <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
                     {statCards.map((card) => (
                         <StatCard key={card.label} {...card} />
                     ))}
                 </div>
 
-                {/* Bottom Row */}
+                {/* Bottom row */}
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 
-                    {/* Habits Today */}
+                    {/* Habits progress */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.5 }}
-                        className="rounded-2xl border border-white/5 bg-gray-900 p-5"
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                        className="rounded-2xl p-5"
+                        style={{
+                            background: 'rgba(10,22,40,0.8)',
+                            border: '1px solid rgba(99,179,255,0.08)',
+                        }}
                     >
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="font-semibold text-white">Habits Today</h3>
-                            <div className="flex items-center gap-1.5 rounded-full bg-orange-500/10 px-2.5 py-1">
-                                <Flame size={12} className="text-orange-400" />
-                                <span className="text-xs font-medium text-orange-400">
-                                    {stats?.current_streaks ?? 0} streak
-                                </span>
-                            </div>
+                            <h3 className="text-sm font-semibold text-white">Habits Today</h3>
+                            <span className="text-xs font-medium px-2.5 py-1 rounded-full"
+                                style={{ background: 'rgba(249,115,22,0.1)', color: '#fb923c', border: '1px solid rgba(249,115,22,0.2)' }}
+                            >
+                                {stats?.current_streaks ?? 0} day streak
+                            </span>
                         </div>
 
                         {(stats?.habits_total ?? 0) === 0 ? (
-                            <EmptyActivity />
+                            <p className="text-center py-8 text-sm" style={{ color: '#3a5070' }}>
+                                No habits yet — create one to get started
+                            </p>
                         ) : (
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-400">Completed</span>
-                                    <span className="font-medium text-white">
-                                        {stats?.habits_completed_today ?? 0} / {stats?.habits_total ?? 0}
+                            <div className="space-y-4">
+                                <div className="flex items-end justify-between">
+                                    <span className="text-3xl font-bold text-white">
+                                        {stats?.habits_completed_today ?? 0}
+                                        <span className="text-lg font-normal" style={{ color: '#3a5070' }}>
+                                            /{stats?.habits_total ?? 0}
+                                        </span>
+                                    </span>
+                                    <span className="text-sm" style={{ color: '#6b89b4' }}>
+                                        {stats?.habits_total
+                                            ? Math.round(((stats.habits_completed_today ?? 0) / stats.habits_total) * 100)
+                                            : 0}% done
                                     </span>
                                 </div>
-                                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-800">
+                                <div className="h-2 w-full overflow-hidden rounded-full"
+                                    style={{ background: 'rgba(99,130,255,0.08)' }}
+                                >
                                     <motion.div
                                         initial={{ width: 0 }}
                                         animate={{
                                             width: `${stats?.habits_total
-                                                ? ((stats.habits_completed_today / stats.habits_total) * 100)
+                                                ? ((stats.habits_completed_today ?? 0) / stats.habits_total) * 100
                                                 : 0}%`
                                         }}
-                                        transition={{ duration: 0.8, delay: 0.6 }}
-                                        className="h-full rounded-full bg-orange-500"
+                                        transition={{ duration: 1, delay: 0.8, ease: 'easeOut' }}
+                                        className="h-full rounded-full"
+                                        style={{ background: 'linear-gradient(90deg, #f97316, #fb923c)' }}
                                     />
                                 </div>
                             </div>
                         )}
                     </motion.div>
 
-                    {/* Quick Links */}
+                    {/* Quick access */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.6 }}
-                        className="rounded-2xl border border-white/5 bg-gray-900 p-5"
+                        transition={{ duration: 0.5, delay: 0.6 }}
+                        className="rounded-2xl p-5"
+                        style={{
+                            background: 'rgba(10,22,40,0.8)',
+                            border: '1px solid rgba(99,179,255,0.08)',
+                        }}
                     >
-                        <h3 className="mb-4 font-semibold text-white">Quick Access</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            {quickLinks.map(({ label, icon: Icon, color, bg, to }) => (
-                                <a
+                        <h3 className="mb-4 text-sm font-semibold text-white">Quick Access</h3>
+                        <div className="grid grid-cols-2 gap-2.5">
+                            {quickAccess.map(({ label, icon: Icon, gradient, to }) => (
+                                <motion.button
                                     key={label}
-                                    href={to}
-                                    className="flex items-center gap-3 rounded-xl border border-white/5 bg-gray-800/50 px-4 py-3 transition hover:bg-gray-800 hover:border-white/10"
+                                    onClick={() => navigate(to)}
+                                    whileHover={{ scale: 1.03, y: -2 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    className="flex items-center gap-3 rounded-xl p-3 text-left transition-all"
+                                    style={{
+                                        background: 'rgba(15,31,61,0.6)',
+                                        border: '1px solid rgba(99,179,255,0.06)',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = 'rgba(99,130,255,0.2)'
+                                        e.currentTarget.style.background = 'rgba(15,31,61,0.9)'
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = 'rgba(99,179,255,0.06)'
+                                        e.currentTarget.style.background = 'rgba(15,31,61,0.6)'
+                                    }}
                                 >
-                                    <div className={`rounded-lg p-1.5 ${bg}`}>
-                                        <Icon size={16} className={color} />
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                                        style={{ background: gradient, boxShadow: `0 0 12px ${gradient.includes('3b82f6') ? 'rgba(59,130,246,0.3)' : 'rgba(99,102,241,0.3)'}` }}
+                                    >
+                                        <Icon size={15} className="text-white" />
                                     </div>
-                                    <span className="text-sm font-medium text-gray-300">{label}</span>
-                                </a>
+                                    <span className="text-xs font-medium" style={{ color: '#6b89b4' }}>{label}</span>
+                                </motion.button>
                             ))}
                         </div>
                     </motion.div>
-
                 </div>
 
-                {/* This week summary */}
+                {/* Weekly chart */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.7 }}
-                    className="rounded-2xl border border-white/5 bg-gray-900 p-5"
+                    transition={{ duration: 0.5, delay: 0.7 }}
+                    className="rounded-2xl p-5"
+                    style={{
+                        background: 'rgba(10,22,40,0.8)',
+                        border: '1px solid rgba(99,179,255,0.08)',
+                    }}
                 >
-                    <div className="flex items-center gap-2 mb-4">
-                        <Calendar size={18} className="text-indigo-400" />
-                        <h3 className="font-semibold text-white">This Week</h3>
+                    <div className="flex items-center justify-between mb-5">
+                        <h3 className="text-sm font-semibold text-white">This Week</h3>
+                        <button
+                            onClick={() => navigate('/calendar')}
+                            className="flex items-center gap-1 text-xs transition-colors"
+                            style={{ color: '#3a5070' }}
+                            onMouseEnter={(e) => e.currentTarget.style.color = '#6b89b4'}
+                            onMouseLeave={(e) => e.currentTarget.style.color = '#3a5070'}
+                        >
+                            View calendar <ChevronRight size={12} />
+                        </button>
                     </div>
-                    <div className="flex items-end gap-1.5 h-16">
+                    <div className="flex items-end gap-1.5 h-20">
                         {Array.from({ length: 7 }).map((_, i) => {
                             const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
                             const today = new Date().getDay()
                             const adjustedToday = today === 0 ? 6 : today - 1
                             const isToday = i === adjustedToday
                             const isPast = i < adjustedToday
-                            const height = isPast
-                                ? `${Math.floor(Math.random() * 60) + 20}%`
-                                : isToday
-                                    ? '45%'
-                                    : '10%'
+                            const heightPct = isPast ? Math.floor(Math.random() * 60) + 20 : isToday ? 45 : 8
                             return (
-                                <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                                    <div className="w-full rounded-t-sm bg-gray-800 relative" style={{ height: '48px' }}>
+                                <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
+                                    <div className="relative w-full rounded-t overflow-hidden"
+                                        style={{ height: '56px', background: 'rgba(99,130,255,0.05)' }}
+                                    >
                                         <motion.div
                                             initial={{ height: 0 }}
-                                            animate={{ height: isPast || isToday ? height : '10%' }}
-                                            transition={{ duration: 0.6, delay: 0.8 + i * 0.05 }}
-                                            className={`absolute bottom-0 w-full rounded-t-sm ${isToday ? 'bg-indigo-500' : isPast ? 'bg-indigo-500/40' : 'bg-gray-700'
-                                                }`}
+                                            animate={{ height: `${heightPct}%` }}
+                                            transition={{ duration: 0.7, delay: 0.8 + i * 0.06, ease: 'easeOut' }}
+                                            className="absolute bottom-0 w-full rounded-t"
+                                            style={{
+                                                background: isToday
+                                                    ? 'linear-gradient(180deg, #6366f1, #3b82f6)'
+                                                    : isPast
+                                                        ? 'linear-gradient(180deg, rgba(99,102,241,0.5), rgba(59,130,246,0.3))'
+                                                        : 'rgba(99,130,255,0.08)',
+                                                boxShadow: isToday ? '0 0 12px rgba(99,102,241,0.4)' : 'none',
+                                            }}
                                         />
                                     </div>
-                                    <span className={`text-xs ${isToday ? 'text-indigo-400 font-medium' : 'text-gray-600'}`}>
+                                    <span className="text-xs"
+                                        style={{ color: isToday ? '#818cf8' : '#3a5070', fontWeight: isToday ? 600 : 400 }}
+                                    >
                                         {days[i]}
                                     </span>
                                 </div>

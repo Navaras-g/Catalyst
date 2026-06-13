@@ -49,106 +49,133 @@ function TaskCard({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className={cn(
-                'group rounded-2xl border border-white/5 bg-gray-900 p-4 transition hover:border-white/10',
-                task.status === 'done' && 'opacity-60'
-            )}
+            whileHover={{ y: -2, transition: { duration: 0.15 } }}
+            className={cn('group relative overflow-hidden rounded-2xl p-4 transition-all cursor-pointer')}
+            style={{
+                background: task.status === 'done' ? 'rgba(10,22,40,0.4)' : 'rgba(10,22,40,0.8)',
+                border: '1px solid rgba(99,179,255,0.08)',
+                opacity: task.status === 'done' ? 0.6 : 1,
+            }}
+            onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,130,255,0.18)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(59,130,246,0.08)';
+            }}
+            onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,179,255,0.08)';
+                (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+            }}
         >
-            <div className="flex items-start gap-3">
-                {/* Status toggle */}
+            {/* Priority accent */}
+            <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-2xl"
+                style={{ background: task.priority === 'urgent' ? '#ef4444' : task.priority === 'high' ? '#f97316' : task.priority === 'medium' ? '#3b82f6' : '#374151' }}
+            />
+
+            <div className="flex items-start gap-3 pl-2">
                 <button
-                    onClick={() =>
+                    onClick={(e) => {
+                        e.stopPropagation()
                         onStatusChange(
                             task.id,
                             task.status === 'done' ? 'todo' : task.status === 'todo' ? 'in_progress' : 'done'
                         )
-                    }
+                    }}
                     className="mt-0.5 shrink-0 transition hover:scale-110"
                 >
                     {statusConfig[task.status].icon}
                 </button>
 
-                {/* Content */}
                 <div className="min-w-0 flex-1" onClick={() => onEdit(task)}>
                     <p className={cn(
-                        'cursor-pointer text-sm font-medium text-white',
-                        task.status === 'done' && 'line-through text-gray-500'
-                    )}>
+                        'text-sm font-medium',
+                        task.status === 'done' ? 'line-through' : 'text-white'
+                    )}
+                        style={{ color: task.status === 'done' ? '#3a5070' : '#e8f0fe' }}
+                    >
                         {task.title}
                     </p>
 
                     {task.description && (
-                        <p className="mt-0.5 truncate text-xs text-gray-500">{task.description}</p>
+                        <p className="mt-0.5 truncate text-xs" style={{ color: '#3a5070' }}>{task.description}</p>
                     )}
 
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                        {/* Priority */}
-                        <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', p.bg, p.color)}>
+                        <span className="rounded-full px-2 py-0.5 text-xs font-medium"
+                            style={{
+                                background: task.priority === 'urgent' ? 'rgba(239,68,68,0.1)' : task.priority === 'high' ? 'rgba(249,115,22,0.1)' : task.priority === 'medium' ? 'rgba(59,130,246,0.1)' : 'rgba(55,65,81,0.3)',
+                                color: task.priority === 'urgent' ? '#f87171' : task.priority === 'high' ? '#fb923c' : task.priority === 'medium' ? '#60a5fa' : '#6b7280',
+                                border: `1px solid ${task.priority === 'urgent' ? 'rgba(239,68,68,0.2)' : task.priority === 'high' ? 'rgba(249,115,22,0.2)' : task.priority === 'medium' ? 'rgba(59,130,246,0.2)' : 'rgba(55,65,81,0.3)'}`,
+                            }}
+                        >
                             {p.label}
                         </span>
 
-                        {/* Category */}
                         {task.category_detail && (
-                            <span
-                                className="rounded-full px-2 py-0.5 text-xs font-medium"
+                            <span className="rounded-full px-2 py-0.5 text-xs font-medium"
                                 style={{
-                                    backgroundColor: task.category_detail.color + '20',
+                                    background: task.category_detail.color + '18',
                                     color: task.category_detail.color,
+                                    border: `1px solid ${task.category_detail.color}30`,
                                 }}
                             >
                                 {task.category_detail.name}
                             </span>
                         )}
 
-                        {/* Due date */}
                         {task.due_date && (
-                            <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <span className="flex items-center gap-1 text-xs" style={{ color: '#3a5070' }}>
                                 <Calendar size={11} />
-                                {new Date(task.due_date).toLocaleDateString('en-US', {
-                                    month: 'short', day: 'numeric'
-                                })}
+                                {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </span>
                         )}
 
-                        {/* Estimated time */}
                         {task.estimated_minutes && (
-                            <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <span className="flex items-center gap-1 text-xs" style={{ color: '#3a5070' }}>
                                 <Clock size={11} />
                                 {task.estimated_minutes}m
                             </span>
                         )}
 
-                        {/* Tags */}
                         {task.tags.length > 0 && (
-                            <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <span className="flex items-center gap-1 text-xs" style={{ color: '#3a5070' }}>
                                 <Tag size={11} />
                                 {task.tags.map((t) => t.name).join(', ')}
                             </span>
                         )}
 
-                        {/* Subtasks */}
                         {task.subtasks.length > 0 && (
-                            <span className="text-xs text-gray-500">
-                                {completedSubs}/{task.subtasks.length} subtasks
+                            <span className="text-xs" style={{ color: '#3a5070' }}>
+                                {completedSubs}/{task.subtasks.length} done
                             </span>
                         )}
                     </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
                     <button
-                        onClick={() => onStarToggle(task.id, !task.is_starred)}
-                        className={cn(
-                            'rounded-lg p-1.5 transition hover:bg-white/5',
-                            task.is_starred ? 'text-yellow-400' : 'text-gray-600'
-                        )}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onStarToggle(task.id, !task.is_starred)
+                        }}
+                        className="rounded-lg p-1.5 transition hover:bg-white/5"
+                        style={{ color: task.is_starred ? '#fbbf24' : '#3a5070' }}
                     >
                         <Star size={14} fill={task.is_starred ? 'currentColor' : 'none'} />
                     </button>
                     <button
-                        onClick={() => onDelete(task.id)}
-                        className="rounded-lg p-1.5 text-gray-600 transition hover:bg-red-500/10 hover:text-red-400"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onDelete(task.id)
+                        }}
+                        className="rounded-lg p-1.5 transition"
+                        style={{ color: '#3a5070' }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#f87171'
+                            e.currentTarget.style.background = 'rgba(239,68,68,0.08)'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#3a5070'
+                            e.currentTarget.style.background = 'transparent'
+                        }}
                     >
                         <Trash2 size={14} />
                     </button>
@@ -296,31 +323,35 @@ export default function TasksPage() {
                 {/* Toolbar */}
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-
-                        {/* Status filter */}
-                        <div className="flex items-center gap-1 rounded-xl border border-white/5 bg-gray-900 p-1">
+                        <div className="flex items-center gap-1 rounded-xl p-1"
+                            style={{ background: 'rgba(10,22,40,0.8)', border: '1px solid rgba(99,179,255,0.08)' }}
+                        >
                             {(['all', 'todo', 'in_progress', 'done'] as const).map((s) => (
                                 <button
                                     key={s}
                                     onClick={() => setFilterStatus(s)}
-                                    className={cn(
-                                        'rounded-lg px-3 py-1.5 text-xs font-medium transition',
-                                        filterStatus === s
-                                            ? 'bg-indigo-600 text-white'
-                                            : 'text-gray-400 hover:text-white'
-                                    )}
+                                    className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
+                                    style={{
+                                        background: filterStatus === s ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'transparent',
+                                        color: filterStatus === s ? 'white' : '#3a5070',
+                                        boxShadow: filterStatus === s ? '0 0 12px rgba(99,102,241,0.3)' : 'none',
+                                    }}
                                 >
                                     {s === 'all' ? 'All' : s === 'in_progress' ? 'In Progress' : s.charAt(0).toUpperCase() + s.slice(1)}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Priority filter */}
                         <div className="relative">
                             <select
                                 value={filterPriority}
                                 onChange={(e) => setFilterPriority(e.target.value)}
-                                className="appearance-none rounded-xl border border-white/5 bg-gray-900 py-2 pl-3 pr-8 text-xs text-gray-400 outline-none focus:border-indigo-500"
+                                className="rounded-xl py-2 pl-3 pr-8 text-xs outline-none appearance-none cursor-pointer"
+                                style={{
+                                    background: 'rgba(10,22,40,0.8)',
+                                    border: '1px solid rgba(99,179,255,0.08)',
+                                    color: '#6b89b4',
+                                }}
                             >
                                 <option value="all">All priorities</option>
                                 <option value="urgent">Urgent</option>
@@ -333,36 +364,37 @@ export default function TasksPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* View toggle */}
-                        <div className="flex items-center gap-1 rounded-xl border border-white/5 bg-gray-900 p-1">
-                            <button
-                                onClick={() => setView('list')}
-                                className={cn(
-                                    'rounded-lg p-1.5 transition',
-                                    view === 'list' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
-                                )}
-                            >
-                                <LayoutList size={16} />
-                            </button>
-                            <button
-                                onClick={() => setView('kanban')}
-                                className={cn(
-                                    'rounded-lg p-1.5 transition',
-                                    view === 'kanban' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
-                                )}
-                            >
-                                <Columns size={16} />
-                            </button>
+                        <div className="flex items-center gap-1 rounded-xl p-1"
+                            style={{ background: 'rgba(10,22,40,0.8)', border: '1px solid rgba(99,179,255,0.08)' }}
+                        >
+                            {[{ v: 'list', Icon: LayoutList }, { v: 'kanban', Icon: Columns }].map(({ v, Icon }) => (
+                                <button
+                                    key={v}
+                                    onClick={() => setView(v as ViewMode)}
+                                    className="rounded-lg p-1.5 transition-all"
+                                    style={{
+                                        background: view === v ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'transparent',
+                                        color: view === v ? 'white' : '#3a5070',
+                                    }}
+                                >
+                                    <Icon size={16} />
+                                </button>
+                            ))}
                         </div>
 
-                        {/* New task */}
-                        <button
+                        <motion.button
                             onClick={handleNewTask}
-                            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500"
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white"
+                            style={{
+                                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                                boxShadow: '0 0 16px rgba(99,102,241,0.3)',
+                            }}
                         >
                             <Plus size={16} />
                             New Task
-                        </button>
+                        </motion.button>
                     </div>
                 </div>
 

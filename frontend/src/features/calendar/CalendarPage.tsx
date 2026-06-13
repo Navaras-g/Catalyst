@@ -15,10 +15,10 @@ import { cn } from '@/lib/utils'
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 const PRIORITY_COLORS: Record<string, string> = {
-    urgent: 'bg-red-500',
-    high: 'bg-orange-500',
-    medium: 'bg-blue-500',
-    low: 'bg-gray-500',
+    urgent: '#ef4444',
+    high: '#f97316',
+    medium: '#3b82f6',
+    low: '#6b7280',
 }
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -33,11 +33,7 @@ function formatMinutes(mins: number) {
 }
 
 // ─── Day Detail Panel ─────────────────────────────────────────────────────────
-function DayPanel({
-    date,
-    day,
-    onClose,
-}: {
+function DayPanel({ date, day, onClose }: {
     date: string
     day: CalendarDay
     onClose: () => void
@@ -51,63 +47,74 @@ function DayPanel({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="flex w-72 shrink-0 flex-col border-l border-white/5 bg-gray-900"
+            className="flex w-72 shrink-0 flex-col"
+            style={{
+                background: 'rgba(10,22,40,0.95)',
+                borderLeft: '1px solid rgba(99,179,255,0.08)',
+            }}
         >
-            <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
-                <div>
-                    <p className="text-sm font-semibold text-white">{formatted}</p>
-                </div>
-                <button
-                    onClick={onClose}
-                    className="rounded-lg p-1.5 text-gray-500 transition hover:bg-white/5 hover:text-white"
+            <div className="flex items-center justify-between px-4 py-3"
+                style={{ borderBottom: '1px solid rgba(99,179,255,0.06)' }}
+            >
+                <p className="text-sm font-semibold text-white">{formatted}</p>
+                <button onClick={onClose} className="rounded-lg p-1.5 transition"
+                    style={{ color: '#3a5070' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#6b89b4' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = '#3a5070' }}
                 >
                     <X size={16} />
                 </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* Focus time */}
                 {day.focus_minutes > 0 && (
-                    <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-3">
+                    <div className="rounded-xl p-3"
+                        style={{
+                            background: 'rgba(99,102,241,0.08)',
+                            border: '1px solid rgba(99,102,241,0.15)',
+                        }}
+                    >
                         <div className="flex items-center gap-2">
-                            <Clock size={14} className="text-indigo-400" />
-                            <span className="text-sm font-medium text-indigo-400">
-                                {formatMinutes(day.focus_minutes)} focus time
+                            <Clock size={14} style={{ color: '#818cf8' }} />
+                            <span className="text-sm font-medium" style={{ color: '#818cf8' }}>
+                                {formatMinutes(day.focus_minutes)} focused
                             </span>
                         </div>
                     </div>
                 )}
 
-                {/* Tasks */}
                 {day.tasks.length > 0 ? (
                     <div>
-                        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-600">
+                        <p className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: '#3a5070' }}>
                             Tasks ({day.tasks.length})
                         </p>
                         <div className="space-y-2">
                             {day.tasks.map((task) => (
-                                <div
-                                    key={task.id}
-                                    className="flex items-center gap-2 rounded-xl border border-white/5 bg-gray-800/50 px-3 py-2.5"
+                                <div key={task.id} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5"
+                                    style={{
+                                        background: 'rgba(15,31,61,0.6)',
+                                        border: '1px solid rgba(99,179,255,0.06)',
+                                    }}
                                 >
                                     {STATUS_ICONS[task.status]}
-                                    <span className={cn(
-                                        'flex-1 truncate text-sm',
-                                        task.status === 'done' ? 'text-gray-500 line-through' : 'text-gray-300'
-                                    )}>
+                                    <span className={cn('flex-1 truncate text-sm', task.status === 'done' && 'line-through')}
+                                        style={{ color: task.status === 'done' ? '#3a5070' : '#e8f0fe' }}
+                                    >
                                         {task.title}
                                     </span>
-                                    <div className={cn(
-                                        'h-1.5 w-1.5 shrink-0 rounded-full',
-                                        PRIORITY_COLORS[task.priority]
-                                    )} />
+                                    <div className="h-1.5 w-1.5 shrink-0 rounded-full"
+                                        style={{
+                                            background: PRIORITY_COLORS[task.priority],
+                                            boxShadow: `0 0 4px ${PRIORITY_COLORS[task.priority]}80`,
+                                        }}
+                                    />
                                 </div>
                             ))}
                         </div>
                     </div>
                 ) : (
-                    <div className="py-6 text-center">
-                        <p className="text-xs text-gray-600">No tasks due</p>
+                    <div className="py-8 text-center">
+                        <p className="text-xs" style={{ color: '#3a5070' }}>Nothing scheduled</p>
                     </div>
                 )}
             </div>
@@ -143,19 +150,15 @@ export default function CalendarPage() {
         setSelectedDate(null)
     }
 
-    // Build calendar grid
     const firstDay = new Date(year, month - 1, 1)
     const lastDay = new Date(year, month, 0)
     const daysInMonth = lastDay.getDate()
 
-    // Monday-based offset
     let startOffset = firstDay.getDay() - 1
     if (startOffset < 0) startOffset = 6
 
     const totalCells = Math.ceil((daysInMonth + startOffset) / 7) * 7
-
     const todayStr = now.toISOString().split('T')[0]
-
     const selectedDay = selectedDate ? data?.days[selectedDate] : null
 
     return (
@@ -227,57 +230,58 @@ export default function CalendarPage() {
                                 return (
                                     <motion.button
                                         key={i}
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
+                                        whileHover={{ scale: 1.04, transition: { duration: 0.15 } }}
+                                        whileTap={{ scale: 0.96 }}
                                         onClick={() => setSelectedDate(isSelected ? null : dateStr)}
-                                        className={cn(
-                                            'flex flex-col rounded-xl border p-2 text-left transition',
-                                            isSelected
-                                                ? 'border-indigo-500/50 bg-indigo-500/10'
+                                        className="flex flex-col rounded-xl p-2 text-left transition-all"
+                                        style={{
+                                            background: isSelected
+                                                ? 'rgba(99,102,241,0.12)'
                                                 : isToday
-                                                    ? 'border-indigo-500/30 bg-indigo-500/5'
-                                                    : 'border-white/5 bg-gray-900 hover:border-white/10'
-                                        )}
+                                                    ? 'rgba(59,130,246,0.06)'
+                                                    : 'rgba(10,22,40,0.6)',
+                                            border: isSelected
+                                                ? '1px solid rgba(99,102,241,0.35)'
+                                                : isToday
+                                                    ? '1px solid rgba(59,130,246,0.25)'
+                                                    : '1px solid rgba(99,179,255,0.06)',
+                                            boxShadow: isSelected ? '0 0 16px rgba(99,102,241,0.15)' : 'none',
+                                        }}
                                     >
-                                        {/* Day number */}
-                                        <span className={cn(
-                                            'mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
-                                            isToday
-                                                ? 'bg-indigo-600 text-white'
-                                                : 'text-gray-400'
-                                        )}>
+                                        <span className="mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium"
+                                            style={{
+                                                background: isToday ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'transparent',
+                                                color: isToday ? 'white' : '#6b89b4',
+                                                boxShadow: isToday ? '0 0 8px rgba(99,102,241,0.4)' : 'none',
+                                            }}
+                                        >
                                             {dayNum}
                                         </span>
 
-                                        {/* Task dots */}
                                         {hasTasks && (
                                             <div className="flex flex-wrap gap-0.5">
                                                 {dayData!.tasks.slice(0, 3).map((task) => (
-                                                    <div
-                                                        key={task.id}
-                                                        className={cn(
-                                                            'h-1.5 w-1.5 rounded-full',
-                                                            PRIORITY_COLORS[task.priority]
-                                                        )}
+                                                    <div key={task.id} className="h-1.5 w-1.5 rounded-full"
+                                                        style={{
+                                                            background: PRIORITY_COLORS[task.priority],
+                                                            boxShadow: `0 0 4px ${PRIORITY_COLORS[task.priority]}80`,
+                                                        }}
                                                     />
                                                 ))}
                                                 {dayData!.tasks.length > 3 && (
-                                                    <span className="text-xs text-gray-600">
+                                                    <span className="text-[10px] leading-none text-gray-500 self-center ml-0.5">
                                                         +{dayData!.tasks.length - 3}
                                                     </span>
                                                 )}
                                             </div>
                                         )}
 
-                                        {/* Focus bar */}
                                         {hasFocus && (
-                                            <div className="mt-auto pt-1">
-                                                <div className="flex items-center gap-1">
-                                                    <Clock size={9} className="text-indigo-400 shrink-0" />
-                                                    <span className="text-xs text-indigo-400">
-                                                        {formatMinutes(dayData!.focus_minutes)}
-                                                    </span>
-                                                </div>
+                                            <div className="mt-auto pt-1 flex items-center gap-1">
+                                                <Clock size={9} style={{ color: '#818cf8' }} />
+                                                <span className="text-[10px]" style={{ color: '#818cf8' }}>
+                                                    {formatMinutes(dayData!.focus_minutes)}
+                                                </span>
                                             </div>
                                         )}
                                     </motion.button>
@@ -291,14 +295,14 @@ export default function CalendarPage() {
                         <p className="text-xs text-gray-600">Priority:</p>
                         {Object.entries(PRIORITY_COLORS).map(([label, color]) => (
                             <div key={label} className="flex items-center gap-1.5">
-                                <div className={cn('h-2 w-2 rounded-full', color)} />
+                                <div className="h-2 w-2 rounded-full" style={{ background: color, boxShadow: `0 0 4px ${color}80` }} />
                                 <span className="text-xs capitalize text-gray-600">{label}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Day detail panel */}
+                {/* Day detail panel overlay handler */}
                 <AnimatePresence>
                     {selectedDate && selectedDay && (
                         <DayPanel
@@ -312,10 +316,14 @@ export default function CalendarPage() {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 20 }}
-                            className="flex w-72 shrink-0 flex-col items-center justify-center border-l border-white/5 bg-gray-900"
+                            className="flex w-72 shrink-0 flex-col items-center justify-center border-l"
+                            style={{
+                                background: 'rgba(10,22,40,0.95)',
+                                borderLeft: '1px solid rgba(99,179,255,0.08)',
+                            }}
                         >
-                            <p className="text-sm text-gray-600">Nothing scheduled</p>
-                            <p className="mt-1 text-xs text-gray-700">
+                            <p className="text-sm" style={{ color: '#3a5070' }}>Nothing scheduled</p>
+                            <p className="mt-1 text-xs" style={{ color: '#6b89b4' }}>
                                 {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
                                     month: 'long', day: 'numeric'
                                 })}
