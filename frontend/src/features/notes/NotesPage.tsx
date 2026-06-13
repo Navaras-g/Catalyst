@@ -176,7 +176,6 @@ function NoteEditor({
 
     return (
         <div className="flex flex-1 flex-col overflow-hidden">
-            {/* Editor toolbar */}
             <div className="flex items-center justify-between border-b border-white/5 px-6 py-3">
                 <div className="flex items-center gap-2">
                     <button
@@ -222,7 +221,6 @@ function NoteEditor({
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
-                {/* Title */}
                 <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -230,7 +228,6 @@ function NoteEditor({
                     className="mb-4 w-full bg-transparent text-2xl font-bold text-white placeholder-gray-700 outline-none"
                 />
 
-                {/* Link to project/task */}
                 <div className="mb-4 flex flex-wrap gap-3">
                     <select
                         value={projectId ?? ''}
@@ -255,7 +252,6 @@ function NoteEditor({
                     </select>
                 </div>
 
-                {/* Content */}
                 {preview ? (
                     <div className="space-y-3 text-sm">
                         <ReactMarkdown
@@ -331,10 +327,19 @@ export default function NotesPage() {
     const queryClient = useQueryClient()
     const [search, setSearch] = useState('')
     const [selectedNote, setSelectedNote] = useState<Note | null>(null)
+    const [filterProject, setFilterProject] = useState<number | null>(null)
+
+    const { data: projects = [] } = useQuery({
+        queryKey: ['projects'],
+        queryFn: projectApi.list,
+    })
 
     const { data: notes = [], isLoading } = useQuery({
-        queryKey: ['notes', search],
-        queryFn: () => noteApi.list(search ? { search } : undefined),
+        queryKey: ['notes', search, filterProject],
+        queryFn: () => noteApi.list({
+            ...(search ? { search } : {}),
+            ...(filterProject ? { project: String(filterProject) } : {}),
+        }),
     })
 
     const createNote = useMutation({
@@ -387,6 +392,21 @@ export default function NotesPage() {
                             <Plus size={16} />
                         </button>
                     </div>
+
+                    {projects.length > 0 && (
+                        <div className="border-b border-white/5 px-3 pb-3 pt-2">
+                            <select
+                                value={filterProject ?? ''}
+                                onChange={(e) => setFilterProject(e.target.value ? Number(e.target.value) : null)}
+                                className="w-full rounded-xl border border-white/5 bg-gray-800 px-3 py-2 text-xs text-gray-400 outline-none focus:border-indigo-500"
+                            >
+                                <option value="">All projects</option>
+                                {projects.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.title}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="flex-1 overflow-y-auto space-y-1 p-2">
                         {isLoading ? (
