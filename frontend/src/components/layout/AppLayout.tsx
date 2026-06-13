@@ -3,7 +3,7 @@ import Sidebar from './Sidebar'
 
 export default function AppLayout() {
     return (
-        <div className="flex h-screen overflow-hidden bg-gray-950">
+        <div className="flex h-screen overflow-hidden" style={{ background: '#020818' }}>
             <Sidebar />
             <div className="flex flex-1 flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto">

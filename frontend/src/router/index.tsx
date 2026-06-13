@@ -11,6 +11,7 @@ import HabitsPage from '@/features/habits/HabitsPage'
 import AchievementsPage from '@/features/gamification/AchievementsPage'
 import NotesPage from '@/features/notes/NotesPage'
 import CalendarPage from '@/features/calendar/CalendarPage'
+import PageTransition from '@/components/PageTransition'
 
 function ProtectedRoute() {
     const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -21,12 +22,6 @@ function PublicRoute() {
     const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
     return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Outlet />
 }
-
-const Placeholder = ({ title }: { title: string }) => (
-    <div className="flex h-full items-center justify-center text-2xl font-semibold text-gray-600">
-        {title} — coming soon
-    </div>
-)
 
 export const router = createBrowserRouter([
     {
@@ -42,18 +37,18 @@ export const router = createBrowserRouter([
             {
                 element: <AppLayout />,
                 children: [
-                    { path: '/dashboard', element: <DashboardPage /> },
-                    { path: '/tasks', element: <TasksPage /> },
-                    { path: '/projects', element: <ProjectsPage /> },
-                    { path: '/focus', element: <FocusPage /> },
-                    { path: '/habits', element: <HabitsPage /> },
-                    { path: '/achievements', element: <AchievementsPage /> },
-                    { path: '/notes', element: <NotesPage /> },
-                    { path: '/calendar', element: <CalendarPage /> },
+                    { path: '/dashboard', element: <PageTransition><DashboardPage /></PageTransition> },
+                    { path: '/tasks', element: <PageTransition><TasksPage /></PageTransition> },
+                    { path: '/projects', element: <PageTransition><ProjectsPage /></PageTransition> },
+                    { path: '/focus', element: <PageTransition><FocusPage /></PageTransition> },
+                    { path: '/habits', element: <PageTransition><HabitsPage /></PageTransition> },
+                    { path: '/achievements', element: <PageTransition><AchievementsPage /></PageTransition> },
+                    { path: '/notes', element: <PageTransition><NotesPage /></PageTransition> },
+                    { path: '/calendar', element: <PageTransition><CalendarPage /></PageTransition> },
                 ],
             },
         ],
     },
     { path: '/', element: <Navigate to="/dashboard" replace /> },
-    { path: '*', element: <Placeholder title="404" /> },
+    { path: '*', element: <PageTransition><div className="flex h-full items-center justify-center text-2xl font-semibold" style={{ color: '#3a5070' }}>404 — Not Found</div></PageTransition> },
 ])
