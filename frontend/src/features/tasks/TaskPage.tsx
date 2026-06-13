@@ -237,6 +237,7 @@ export default function TasksPage() {
             queryClient.invalidateQueries({ queryKey: ['projects'] })
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
             queryClient.invalidateQueries({ queryKey: ['xp'] })
+            queryClient.invalidateQueries({ queryKey: ['calendar'] })
         },
     })
 
@@ -244,8 +245,10 @@ export default function TasksPage() {
         mutationFn: (id: number) => taskApi.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] })
+            queryClient.invalidateQueries({ queryKey: ['projects'] })
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
             queryClient.invalidateQueries({ queryKey: ['xp'] })
+            queryClient.invalidateQueries({ queryKey: ['calendar'] })
         },
     })
 

@@ -70,3 +70,51 @@ class DashboardStatsView(APIView):
             'habits_completed_today': completed_habits_today,
             'habits_total': total_habits,
         })
+
+class CalendarView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        year = int(request.query_params.get('year', timezone.now().year))
+        month = int(request.query_params.get('month', timezone.now().month))
+
+        from apps.tasks.models import Task
+        from apps.focus.models import FocusSession
+
+        # Tasks with due dates in this month
+        tasks = Task.objects.filter(
+            user=request.user,
+            due_date__year=year,
+            due_date__month=month,
+        ).values('id', 'title', 'status', 'priority', 'due_date')
+
+        # Focus sessions in this month
+        sessions = FocusSession.objects.filter(
+            user=request.user,
+            session_type='work',
+            started_at__year=year,
+            started_at__month=month,
+        ).values('id', 'duration_minutes', 'completed', 'started_at', 'task__title')
+
+        # Group by date
+        from collections import defaultdict
+        days = defaultdict(lambda: {'tasks': [], 'focus_minutes': 0})
+
+        for task in tasks:
+            date_str = task['due_date'].strftime('%Y-%m-%d')
+            days[date_str]['tasks'].append({
+                'id': task['id'],
+                'title': task['title'],
+                'status': task['status'],
+                'priority': task['priority'],
+            })
+
+        for session in sessions:
+            date_str = session['started_at'].strftime('%Y-%m-%d')
+            days[date_str]['focus_minutes'] += session['duration_minutes']
+
+        return Response({
+            'year': year,
+            'month': month,
+            'days': days,
+        })

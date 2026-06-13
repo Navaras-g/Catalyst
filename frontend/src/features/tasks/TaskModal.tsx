@@ -91,9 +91,11 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
         mutationFn: taskApi.create,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] })
+            queryClient.invalidateQueries({ queryKey: ['projects'] })
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
             queryClient.invalidateQueries({ queryKey: ['xp'] })
             queryClient.invalidateQueries({ queryKey: ['achievements'] })
+            queryClient.invalidateQueries({ queryKey: ['calendar'] })
             onClose()
         },
     })
@@ -106,6 +108,7 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
             queryClient.invalidateQueries({ queryKey: ['projects'] })
             queryClient.invalidateQueries({ queryKey: ['xp'] })
             queryClient.invalidateQueries({ queryKey: ['achievements'] })
+            queryClient.invalidateQueries({ queryKey: ['calendar'] })
             onClose()
         },
     })

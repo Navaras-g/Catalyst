@@ -9,6 +9,7 @@ import {
     Flame,
     Trophy,
     BookOpen,
+    CalendarDays,
     ChevronLeft,
     ChevronRight,
     Zap,
@@ -27,6 +28,7 @@ const navItems = [
     { to: '/habits', icon: Flame, label: 'Habits' },
     { to: '/achievements', icon: Trophy, label: 'Achievements' },
     { to: '/notes', icon: BookOpen, label: 'Notes' },
+    { to: '/calendar', icon: CalendarDays, label: 'Calendar' },
 ]
 
 export default function Sidebar() {
