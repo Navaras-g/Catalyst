@@ -164,6 +164,8 @@ export default function HabitsPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['habits'] })
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+            queryClient.invalidateQueries({ queryKey: ['xp'] })
+            queryClient.invalidateQueries({ queryKey: ['achievements'] })
         },
     })
 

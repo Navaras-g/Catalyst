@@ -236,6 +236,7 @@ export default function TasksPage() {
             queryClient.invalidateQueries({ queryKey: ['tasks'] })
             queryClient.invalidateQueries({ queryKey: ['projects'] })
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+            queryClient.invalidateQueries({ queryKey: ['xp'] })
         },
     })
 
@@ -244,6 +245,7 @@ export default function TasksPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] })
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+            queryClient.invalidateQueries({ queryKey: ['xp'] })
         },
     })
 

@@ -155,3 +155,38 @@ class ChangePasswordView(APIView):
         request.user.set_password(serializer.validated_data['new_password'])
         request.user.save()
         return Response({'detail': 'Password changed successfully.'})
+
+from .models import UserAchievement
+from .achievements import ACHIEVEMENTS
+
+class AchievementsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        earned = UserAchievement.objects.filter(
+            user=request.user
+        ).values_list('key', 'earned_at')
+        earned_map = {key: earned_at for key, earned_at in earned}
+
+        result = []
+        for a in ACHIEVEMENTS:
+            result.append({
+                **a,
+                'earned': a['key'] in earned_map,
+                'earned_at': earned_map.get(a['key']),
+            })
+        return Response(result)
+
+
+class XPView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile = request.user.profile
+        xp_in_level = profile.xp % 100
+        return Response({
+            'xp': profile.xp,
+            'level': profile.level,
+            'xp_in_level': xp_in_level,
+            'xp_to_next_level': 100 - xp_in_level,
+        })

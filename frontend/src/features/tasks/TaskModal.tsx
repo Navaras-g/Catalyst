@@ -92,6 +92,8 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] })
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+            queryClient.invalidateQueries({ queryKey: ['xp'] })
+            queryClient.invalidateQueries({ queryKey: ['achievements'] })
             onClose()
         },
     })
@@ -102,6 +104,8 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] })
             queryClient.invalidateQueries({ queryKey: ['projects'] })
+            queryClient.invalidateQueries({ queryKey: ['xp'] })
+            queryClient.invalidateQueries({ queryKey: ['achievements'] })
             onClose()
         },
     })

@@ -8,6 +8,7 @@ import TasksPage from '@/features/tasks/TaskPage'
 import ProjectsPage from '@/features/projects/ProjectsPage'
 import FocusPage from '@/features/focus/FocusPage'
 import HabitsPage from '@/features/habits/HabitsPage'
+import AchievementsPage from '@/features/gamification/AchievementsPage'
 
 function ProtectedRoute() {
     const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
                     { path: '/projects', element: <ProjectsPage /> },
                     { path: '/focus', element: <FocusPage /> },
                     { path: '/habits', element: <HabitsPage /> },
+                    { path: '/achievements', element: <AchievementsPage /> },
                 ],
             },
         ],

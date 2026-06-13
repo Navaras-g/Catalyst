@@ -7,6 +7,7 @@ import {
     FolderKanban,
     Timer,
     Flame,
+    Trophy,
     ChevronLeft,
     ChevronRight,
     Zap,
@@ -23,6 +24,7 @@ const navItems = [
     { to: '/projects', icon: FolderKanban, label: 'Projects' },
     { to: '/focus', icon: Timer, label: 'Focus' },
     { to: '/habits', icon: Flame, label: 'Habits' },
+    { to: '/achievements', icon: Trophy, label: 'Achievements' },
 ]
 
 export default function Sidebar() {

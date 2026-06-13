@@ -4,6 +4,12 @@ import { router } from '@/router'
 import { useAuthStore } from '@/store/authStore'
 import apiClient from '@/api/client'
 import type { User } from '@/types'
+import { XPToastContainer, useXPWatcher } from '@/features/gamification/useXPToast'
+
+function XPWatcher() {
+  useXPWatcher()
+  return null
+}
 
 export default function App() {
   const setUser = useAuthStore((s) => s.setUser)
@@ -27,5 +33,11 @@ export default function App() {
     )
   }
 
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <XPWatcher />
+      <XPToastContainer />
+      <RouterProvider router={router} />
+    </>
+  )
 }

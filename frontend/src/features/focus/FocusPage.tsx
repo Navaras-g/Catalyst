@@ -289,6 +289,8 @@ export default function FocusPage() {
             queryClient.invalidateQueries({ queryKey: ['focus-sessions'] })
             queryClient.invalidateQueries({ queryKey: ['focus-stats'] })
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+            queryClient.invalidateQueries({ queryKey: ['xp'] })
+            queryClient.invalidateQueries({ queryKey: ['achievements'] })
         },
     })
 
