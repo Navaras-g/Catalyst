@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'apps.focus',
     'apps.habits',
     'apps.dashboard',
+    'apps.notes',
 ]
 
 MIDDLEWARE = [

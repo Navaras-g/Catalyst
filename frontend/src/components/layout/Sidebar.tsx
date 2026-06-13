@@ -8,6 +8,7 @@ import {
     Timer,
     Flame,
     Trophy,
+    BookOpen,
     ChevronLeft,
     ChevronRight,
     Zap,
@@ -25,6 +26,7 @@ const navItems = [
     { to: '/focus', icon: Timer, label: 'Focus' },
     { to: '/habits', icon: Flame, label: 'Habits' },
     { to: '/achievements', icon: Trophy, label: 'Achievements' },
+    { to: '/notes', icon: BookOpen, label: 'Notes' },
 ]
 
 export default function Sidebar() {

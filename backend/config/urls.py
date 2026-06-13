@@ -11,4 +11,5 @@ urlpatterns = [
     path('api/v1/focus/', include('apps.focus.urls')),
     path('api/v1/habits/', include('apps.habits.urls')),
     path('api/v1/dashboard/', include('apps.dashboard.urls')),
+    path('api/v1/notes/', include('apps.notes.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
