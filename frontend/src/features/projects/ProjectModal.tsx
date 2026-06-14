@@ -76,6 +76,7 @@ export default function ProjectModal({ open, onClose, editingProject }: ProjectM
             projectApi.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
             onClose()
         },
     })

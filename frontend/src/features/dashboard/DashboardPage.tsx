@@ -95,7 +95,7 @@ export default function DashboardPage() {
         {
             label: 'Completed',
             value: isLoading ? '—' : (stats?.tasks_completed_this_week ?? 0),
-            sub: 'this week',
+            sub: 'tasks this week',
             gradient: 'linear-gradient(90deg, #10b981, #34d399)',
             delay: 0.2,
         },
