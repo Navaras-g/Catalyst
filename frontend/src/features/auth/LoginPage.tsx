@@ -44,22 +44,22 @@ export default function LoginPage() {
     return (
         <div className="flex h-screen w-full overflow-hidden">
 
-            {/* ── Left panel — image + atmosphere ── */}
-            <div className="relative hidden lg:flex lg:w-1/2 flex-col items-center justify-center overflow-hidden"
+            {/* ── Left panel ── */}
+            <div
+                className="relative hidden lg:flex lg:w-1/2 flex-col items-center justify-center overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #020818 0%, #0a1628 50%, #0f1f3d 100%)' }}
             >
-                {/* Image slot — replace src with your image */}
+                {/* Image */}
                 <div className="absolute inset-0">
                     <img
                         src="/auth-bg.jpg"
                         alt=""
-                        className="h-full w-full object-cover opacity-20"
+                        className="h-full w-full object-cover opacity-35"
                         onError={(e) => (e.currentTarget.style.display = 'none')}
                     />
-                    {/* Gradient overlay */}
                     <div className="absolute inset-0"
                         style={{
-                            background: 'linear-gradient(135deg, rgba(2,8,24,0.95) 0%, rgba(10,22,40,0.7) 50%, rgba(15,31,61,0.9) 100%)'
+                            background: 'linear-gradient(135deg, rgba(2,8,24,0.85) 0%, rgba(10,22,40,0.55) 50%, rgba(15,31,61,0.75) 100%)'
                         }}
                     />
                 </div>
@@ -82,16 +82,77 @@ export default function LoginPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
                     >
+                        {/* Spinner + Logo */}
                         <div className="mb-6 flex justify-center">
-                            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl"
-                                style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 0 40px rgba(99,102,241,0.4)' }}
-                            >
-                                <Zap size={36} className="text-white" />
-                                <div className="absolute inset-0 rounded-2xl"
-                                    style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.2), transparent)' }}
+                            <div className="relative flex items-center justify-center">
+                                {/* Outer slow spin */}
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-28 w-28 rounded-full"
+                                    style={{
+                                        border: '1px solid transparent',
+                                        borderTopColor: 'rgba(99,130,255,0.6)',
+                                        borderRightColor: 'rgba(99,130,255,0.2)',
+                                        boxShadow: '0 0 20px rgba(99,102,241,0.15)',
+                                    }}
                                 />
+                                {/* Middle counter-spin */}
+                                <motion.div
+                                    animate={{ rotate: -360 }}
+                                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-20 w-20 rounded-full"
+                                    style={{
+                                        border: '1px solid transparent',
+                                        borderTopColor: 'rgba(139,92,246,0.5)',
+                                        borderLeftColor: 'rgba(139,92,246,0.2)',
+                                    }}
+                                />
+                                {/* Orbiting dot — outer ring */}
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-28 w-28"
+                                >
+                                    <div
+                                        className="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rounded-full"
+                                        style={{
+                                            background: '#6366f1',
+                                            boxShadow: '0 0 8px rgba(99,102,241,0.8), 0 0 16px rgba(99,102,241,0.4)',
+                                        }}
+                                    />
+                                </motion.div>
+                                {/* Orbiting dot — middle ring */}
+                                <motion.div
+                                    animate={{ rotate: -360 }}
+                                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-20 w-20"
+                                >
+                                    <div
+                                        className="absolute -top-1 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full"
+                                        style={{
+                                            background: '#a78bfa',
+                                            boxShadow: '0 0 6px rgba(167,139,250,0.8)',
+                                        }}
+                                    />
+                                </motion.div>
+                                {/* Center logo */}
+                                <div
+                                    className="relative flex h-14 w-14 items-center justify-center rounded-xl"
+                                    style={{
+                                        background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                                        boxShadow: '0 0 30px rgba(99,102,241,0.5)',
+                                    }}
+                                >
+                                    <Zap size={28} className="text-white" />
+                                    <div
+                                        className="absolute inset-0 rounded-xl"
+                                        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.15), transparent)' }}
+                                    />
+                                </div>
                             </div>
                         </div>
+
                         <h1 className="gradient-text glow-text mb-4 text-5xl font-bold tracking-tight">
                             Catalyst
                         </h1>
@@ -124,7 +185,8 @@ export default function LoginPage() {
             </div>
 
             {/* ── Right panel — form ── */}
-            <div className="flex w-full lg:w-1/2 flex-col items-center justify-center px-8"
+            <div
+                className="flex w-full lg:w-1/2 flex-col items-center justify-center px-8"
                 style={{ background: 'linear-gradient(180deg, #020818 0%, #0a1628 100%)' }}
             >
                 <motion.div
@@ -135,7 +197,8 @@ export default function LoginPage() {
                 >
                     {/* Mobile logo */}
                     <div className="mb-8 flex items-center gap-3 lg:hidden">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl"
+                        <div
+                            className="flex h-10 w-10 items-center justify-center rounded-xl"
                             style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
                         >
                             <Zap size={20} className="text-white" />
@@ -151,7 +214,8 @@ export default function LoginPage() {
                     </div>
 
                     {/* Card */}
-                    <div className="gradient-border rounded-2xl p-px"
+                    <div
+                        className="gradient-border rounded-2xl p-px"
                         style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(99,102,241,0.3), rgba(59,130,246,0.1))' }}
                     >
                         <div className="rounded-2xl p-8" style={{ background: '#0a1628' }}>
@@ -179,7 +243,7 @@ export default function LoginPage() {
                                             {...register('email')}
                                             type="email"
                                             placeholder="you@example.com"
-                                            className="w-full rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-opacity-40 outline-none transition-all"
+                                            className="w-full rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all"
                                             style={{
                                                 background: 'rgba(15,31,61,0.8)',
                                                 border: '1px solid rgba(99,130,255,0.1)',
@@ -233,7 +297,8 @@ export default function LoginPage() {
                                         opacity: isSubmitting ? 0.7 : 1,
                                     }}
                                 >
-                                    <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    <span
+                                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
                                         style={{ background: 'linear-gradient(135deg, #60a5fa, #818cf8)' }}
                                     />
                                     <span className="relative">
@@ -249,7 +314,8 @@ export default function LoginPage() {
 
                     <p className="mt-6 text-center text-sm" style={{ color: '#3a5070' }}>
                         Don't have an account?{' '}
-                        <Link to="/register"
+                        <Link
+                            to="/register"
                             className="font-medium transition-colors hover:text-blue-400"
                             style={{ color: '#6b89b4' }}
                         >

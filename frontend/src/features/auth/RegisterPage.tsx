@@ -75,11 +75,11 @@ export default function RegisterPage() {
                     <img
                         src="/auth-bg.jpg"
                         alt=""
-                        className="h-full w-full object-cover opacity-20"
+                        className="h-full w-full object-cover opacity-35"
                         onError={(e) => (e.currentTarget.style.display = 'none')}
                     />
                     <div className="absolute inset-0"
-                        style={{ background: 'linear-gradient(135deg, rgba(2,8,24,0.95) 0%, rgba(10,22,40,0.7) 50%, rgba(15,31,61,0.9) 100%)' }}
+                        style={{ background: 'linear-gradient(135deg, rgba(2,8,24,0.80) 0%, rgba(10,22,40,0.7) 50%, rgba(15,31,61,0.9) 100%)' }}
                     />
                 </div>
 
@@ -96,11 +96,65 @@ export default function RegisterPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
+                        {/* Replace this in RegisterPage left panel */}
                         <div className="mb-6 flex justify-center">
-                            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl"
-                                style={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)', boxShadow: '0 0 40px rgba(99,102,241,0.4)' }}
-                            >
-                                <Zap size={36} className="text-white" />
+                            <div className="relative flex items-center justify-center">
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-28 w-28 rounded-full"
+                                    style={{
+                                        border: '1px solid transparent',
+                                        borderTopColor: 'rgba(99,130,255,0.6)',
+                                        borderRightColor: 'rgba(99,130,255,0.2)',
+                                        boxShadow: '0 0 20px rgba(99,102,241,0.15)',
+                                    }}
+                                />
+                                <motion.div
+                                    animate={{ rotate: -360 }}
+                                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-20 w-20 rounded-full"
+                                    style={{
+                                        border: '1px solid transparent',
+                                        borderTopColor: 'rgba(139,92,246,0.5)',
+                                        borderLeftColor: 'rgba(139,92,246,0.2)',
+                                    }}
+                                />
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-28 w-28"
+                                >
+                                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rounded-full"
+                                        style={{
+                                            background: '#6366f1',
+                                            boxShadow: '0 0 8px rgba(99,102,241,0.8), 0 0 16px rgba(99,102,241,0.4)',
+                                        }}
+                                    />
+                                </motion.div>
+                                <motion.div
+                                    animate={{ rotate: -360 }}
+                                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-20 w-20"
+                                >
+                                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full"
+                                        style={{
+                                            background: '#a78bfa',
+                                            boxShadow: '0 0 6px rgba(167,139,250,0.8)',
+                                        }}
+                                    />
+                                </motion.div>
+                                <div className="relative flex h-14 w-14 items-center justify-center rounded-xl"
+                                    style={{
+                                        background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
+                                        boxShadow: '0 0 30px rgba(99,102,241,0.5)',
+                                    }}
+                                >
+                                    <Zap size={28} className="text-white" />
+                                    <div className="absolute inset-0 rounded-xl"
+                                        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.15), transparent)' }}
+                                    />
+                                </div>
                             </div>
                         </div>
                         <h1 className="gradient-text glow-text mb-4 text-5xl font-bold">Catalyst</h1>
