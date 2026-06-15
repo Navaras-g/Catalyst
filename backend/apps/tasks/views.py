@@ -10,7 +10,7 @@ from .serializers import (
     TaskSerializer, TaskCreateUpdateSerializer,
     SubTaskSerializer, CategorySerializer, TagSerializer
 )
-
+from .nlp import parse_task_text
 
 # ─── Categories ───────────────────────────────────────────────────────────────
 
@@ -173,3 +173,17 @@ class SubTaskDetailView(APIView):
         subtask = get_object_or_404(SubTask, pk=pk, task_id=task_pk)
         subtask.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ParseTaskTextView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        text = request.data.get('text', '').strip()
+        if not text:
+            return Response(
+                {'error': 'text is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        result = parse_task_text(text)
+        return Response(result)

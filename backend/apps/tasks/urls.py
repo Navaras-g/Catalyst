@@ -3,7 +3,7 @@ from .views import (
     TaskListCreateView, TaskDetailView,
     SubTaskListCreateView, SubTaskDetailView,
     CategoryListCreateView, CategoryDetailView,
-    TagListCreateView, TagDetailView,
+    TagListCreateView, TagDetailView, ParseTaskTextView,
 )
 
 urlpatterns = [
@@ -14,6 +14,8 @@ urlpatterns = [
     # Tags
     path('tags/', TagListCreateView.as_view(), name='tag-list'),
     path('tags/<int:pk>/', TagDetailView.as_view(), name='tag-detail'),
+
+    path('parse/', ParseTaskTextView.as_view(), name='parse-task'),
 
     # Tasks
     path('', TaskListCreateView.as_view(), name='task-list'),

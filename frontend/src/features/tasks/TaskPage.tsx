@@ -4,13 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Plus, Star, Calendar, Clock, Tag,
     LayoutList, Columns, Trash2, CheckCircle2,
-    Circle, AlertCircle, ChevronDown,
+    Circle, AlertCircle, ChevronDown, Sparkles,
 } from 'lucide-react'
 import { taskApi } from './taskApi'
 import type { Task, Priority, TaskStatus } from './taskApi'
 import Header from '@/components/layout/Header'
 import { cn } from '@/lib/utils'
 import TaskModal from './TaskModal.tsx'
+import NLPTaskInput from './NLPTaskInput'
 
 // ─── Priority config ──────────────────────────────────────────────────────────
 const priorityConfig: Record<Priority, { label: string; color: string; bg: string }> = {
@@ -49,25 +50,26 @@ function TaskCard({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
-            className={cn('group relative overflow-hidden rounded-2xl p-4 transition-all cursor-pointer')}
+            whileHover={{
+                y: -2,
+                borderColor: 'rgba(99,130,255,0.18)',
+                boxShadow: '0 4px 24px rgba(59,130,246,0.08)',
+                transition: { duration: 0.15 }
+            }}
+            className={cn(
+                'group relative overflow-hidden rounded-2xl p-4 transition-all cursor-pointer border'
+            )}
             style={{
                 background: task.status === 'done' ? 'rgba(10,22,40,0.4)' : 'rgba(10,22,40,0.8)',
-                border: '1px solid rgba(99,179,255,0.08)',
+                borderColor: 'rgba(99,179,255,0.08)',
                 opacity: task.status === 'done' ? 0.6 : 1,
-            }}
-            onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,130,255,0.18)';
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(59,130,246,0.08)';
-            }}
-            onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,179,255,0.08)';
-                (e.currentTarget as HTMLElement).style.boxShadow = 'none';
             }}
         >
             {/* Priority accent */}
             <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-2xl"
-                style={{ background: task.priority === 'urgent' ? '#ef4444' : task.priority === 'high' ? '#f97316' : task.priority === 'medium' ? '#3b82f6' : '#374151' }}
+                style={{
+                    background: task.priority === 'urgent' ? '#ef4444' : task.priority === 'high' ? '#f97316' : task.priority === 'medium' ? '#3b82f6' : '#374151'
+                }}
             />
 
             <div className="flex items-start gap-3 pl-2">
@@ -166,16 +168,8 @@ function TaskCard({
                             e.stopPropagation()
                             onDelete(task.id)
                         }}
-                        className="rounded-lg p-1.5 transition"
+                        className="rounded-lg p-1.5 transition text-[#3a5070] hover:text-[#f87171] hover:bg-rgba(239,68,68,0.08)"
                         style={{ color: '#3a5070' }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.color = '#f87171'
-                            e.currentTarget.style.background = 'rgba(239,68,68,0.08)'
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.color = '#3a5070'
-                            e.currentTarget.style.background = 'transparent'
-                        }}
                     >
                         <Trash2 size={14} />
                     </button>
@@ -249,6 +243,7 @@ export default function TasksPage() {
     const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
     const [filterPriority, setFilterPriority] = useState<string>('all')
     const [modalOpen, setModalOpen] = useState(false)
+    const [nlpOpen, setNlpOpen] = useState(false)
     const [editingTask, setEditingTask] = useState<Task | null>(null)
 
     const { data: tasks = [], isLoading } = useQuery({
@@ -383,6 +378,21 @@ export default function TasksPage() {
                         </div>
 
                         <motion.button
+                            onClick={() => setNlpOpen(true)}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium"
+                            style={{
+                                background: 'rgba(99,102,241,0.1)',
+                                border: '1px solid rgba(99,102,241,0.2)',
+                                color: '#818cf8',
+                            }}
+                        >
+                            <Sparkles size={16} />
+                            Smart Add
+                        </motion.button>
+
+                        <motion.button
                             onClick={handleNewTask}
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
@@ -458,6 +468,15 @@ export default function TasksPage() {
                 onClose={() => { setModalOpen(false); setEditingTask(null) }}
                 editingTask={editingTask}
             />
+
+            <AnimatePresence>
+                {nlpOpen && (
+                    <NLPTaskInput
+                        onClose={() => setNlpOpen(false)}
+                        onCreated={() => setNlpOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     )
 }

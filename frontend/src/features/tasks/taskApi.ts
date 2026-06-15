@@ -86,4 +86,13 @@ export const taskApi = {
         const res = await apiClient.post<Category>('/tasks/categories/', data)
         return res.data
     },
+    parse: async (text: string) => {
+        const res = await apiClient.post<{
+            title: string
+            priority: Priority
+            due_date: string | null
+            estimated_minutes: number | null
+        }>('/tasks/parse/', { text })
+        return res.data
+    },
 }
