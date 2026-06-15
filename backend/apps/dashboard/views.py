@@ -118,3 +118,11 @@ class CalendarView(APIView):
             'month': month,
             'days': days,
         })
+
+class ProductivityInsightsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .analyzer import get_productivity_insights
+        insights = get_productivity_insights(request.user)
+        return Response(insights)

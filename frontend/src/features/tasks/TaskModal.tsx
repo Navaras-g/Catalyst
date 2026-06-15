@@ -96,6 +96,7 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
             queryClient.invalidateQueries({ queryKey: ['xp'] })
             queryClient.invalidateQueries({ queryKey: ['achievements'] })
             queryClient.invalidateQueries({ queryKey: ['calendar'] })
+            queryClient.invalidateQueries({ queryKey: ['insights'] })
             onClose()
         },
     })
@@ -109,6 +110,7 @@ export default function TaskModal({ open, onClose, editingTask }: TaskModalProps
             queryClient.invalidateQueries({ queryKey: ['xp'] })
             queryClient.invalidateQueries({ queryKey: ['achievements'] })
             queryClient.invalidateQueries({ queryKey: ['calendar'] })
+            queryClient.invalidateQueries({ queryKey: ['insights'] })
             onClose()
         },
     })

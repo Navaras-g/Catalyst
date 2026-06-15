@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
     CheckSquare, FolderKanban, Flame, Clock,
-    ChevronRight,
+    ChevronRight, TrendingUp, // Added TrendingUp for the Insights card
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import apiClient from '@/api/client'
@@ -17,6 +17,25 @@ interface DashboardStats {
     total_focus_minutes_today: number
     habits_completed_today: number
     habits_total: number
+}
+
+interface Insight {
+    type: string
+    icon: string
+    title: string
+    description: string
+    value: string | null
+}
+
+const INSIGHT_STYLES: Record<string, { gradient: string; valueColor: string; border: string }> = {
+    peak_day: { gradient: 'rgba(99,102,241,0.08)', valueColor: '#818cf8', border: 'rgba(99,102,241,0.15)' },
+    peak_time: { gradient: 'rgba(59,130,246,0.08)', valueColor: '#60a5fa', border: 'rgba(59,130,246,0.15)' },
+    estimation: { gradient: 'rgba(249,115,22,0.08)', valueColor: '#fb923c', border: 'rgba(249,115,22,0.15)' },
+    focus_impact: { gradient: 'rgba(139,92,246,0.08)', valueColor: '#a78bfa', border: 'rgba(139,92,246,0.15)' },
+    habit_pattern: { gradient: 'rgba(249,115,22,0.08)', valueColor: '#fb923c', border: 'rgba(249,115,22,0.15)' },
+    consistency: { gradient: 'rgba(16,185,129,0.08)', valueColor: '#34d399', border: 'rgba(16,185,129,0.15)' },
+    warning: { gradient: 'rgba(239,68,68,0.08)', valueColor: '#f87171', border: 'rgba(239,68,68,0.15)' },
+    info: { gradient: 'rgba(99,130,255,0.05)', valueColor: '#6b89b4', border: 'rgba(99,130,255,0.08)' },
 }
 
 function getGreeting() {
@@ -67,6 +86,89 @@ function StatCard({
             <p className="text-xs font-medium uppercase tracking-wider" style={{ color: '#3a5070' }}>{label}</p>
             <p className="mt-2 text-4xl font-bold text-white">{value}</p>
             {sub && <p className="mt-1 text-xs" style={{ color: '#3a5070' }}>{sub}</p>}
+        </motion.div>
+    )
+}
+
+function InsightsCard() {
+    const { data: insights = [], isLoading } = useQuery({
+        queryKey: ['insights'],
+        queryFn: async () => {
+            const res = await apiClient.get<Insight[]>('/dashboard/insights/')
+            return res.data
+        },
+        refetchInterval: 1000 * 60 * 5,
+    })
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+            className="rounded-2xl p-5"
+            style={{
+                background: 'rgba(10,22,40,0.8)',
+                border: '1px solid rgba(99,179,255,0.08)',
+            }}
+        >
+            <div className="mb-4 flex items-center gap-2.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg"
+                    style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
+                >
+                    <TrendingUp size={14} className="text-white" />
+                </div>
+                <h3 className="text-sm font-semibold text-white">Productivity Insights</h3>
+                <span className="ml-auto rounded-full px-2 py-0.5 text-xs"
+                    style={{
+                        background: 'rgba(99,102,241,0.1)',
+                        color: '#818cf8',
+                        border: '1px solid rgba(99,102,241,0.2)',
+                    }}
+                >
+                    AI
+                </span>
+            </div>
+
+            {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+                </div>
+            ) : (
+                <div className="space-y-2.5">
+                    {insights.map((insight, i) => {
+                        const style = INSIGHT_STYLES[insight.type] ?? INSIGHT_STYLES.info
+                        return (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.9 + i * 0.08 }}
+                                className="flex items-start gap-3 rounded-xl p-3"
+                                style={{
+                                    background: style.gradient,
+                                    border: `1px solid ${style.border}`,
+                                }}
+                            >
+                                {insight.value && (
+                                    <div className="shrink-0 text-right">
+                                        <span className="text-lg font-bold"
+                                            style={{ color: style.valueColor }}
+                                        >
+                                            {insight.value}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-semibold text-white">{insight.title}</p>
+                                    <p className="mt-0.5 text-xs leading-relaxed" style={{ color: '#6b89b4' }}>
+                                        {insight.description}
+                                    </p>
+                                </div>
+                            </motion.div>
+                        )
+                    })}
+                </div>
+            )}
         </motion.div>
     )
 }
@@ -330,6 +432,9 @@ export default function DashboardPage() {
                         })}
                     </div>
                 </motion.div>
+
+                {/* Insights — after the weekly chart */}
+                <InsightsCard />
 
             </div>
         </div>

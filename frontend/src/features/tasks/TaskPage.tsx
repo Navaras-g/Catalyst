@@ -260,6 +260,7 @@ export default function TasksPage() {
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
             queryClient.invalidateQueries({ queryKey: ['xp'] })
             queryClient.invalidateQueries({ queryKey: ['calendar'] })
+            queryClient.invalidateQueries({ queryKey: ['insights'] })
         },
     })
 
@@ -271,6 +272,7 @@ export default function TasksPage() {
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
             queryClient.invalidateQueries({ queryKey: ['xp'] })
             queryClient.invalidateQueries({ queryKey: ['calendar'] })
+            queryClient.invalidateQueries({ queryKey: ['insights'] })
         },
     })
 
