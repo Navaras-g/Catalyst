@@ -15,9 +15,14 @@ export interface FocusSession {
 
 export interface FocusStats {
     today_minutes: number
-    week_minutes: number
     today_sessions: number
+    week_minutes: number
+    last_week_minutes: number
+    week_change: number | null
+    all_time_minutes: number
     total_sessions: number
+    best_day: string | null
+    best_day_minutes: number
     daily: { date: string; minutes: number }[]
 }
 

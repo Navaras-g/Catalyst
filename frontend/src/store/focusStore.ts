@@ -10,7 +10,6 @@ interface TimerConfig {
 }
 
 interface FocusStore {
-    // Timer state
     sessionType: SessionType
     timerState: 'idle' | 'running' | 'paused' | 'finished'
     timeLeft: number
@@ -18,9 +17,10 @@ interface FocusStore {
     currentSessionId: number | null
     selectedTaskId: number | null
     startedAt: string | null
+    tickStartedAt: number | null   // timestamp when current tick period began
+    tickStartTimeLeft: number | null // timeLeft when current tick period began
     config: TimerConfig
 
-    // Actions
     setSessionType: (t: SessionType) => void
     setTimerState: (s: 'idle' | 'running' | 'paused' | 'finished') => void
     setTimeLeft: (t: number) => void
@@ -28,6 +28,7 @@ interface FocusStore {
     setCurrentSessionId: (id: number | null) => void
     setSelectedTaskId: (id: number | null) => void
     setStartedAt: (s: string | null) => void
+    setTickStart: (ts: number, tl: number) => void
     setConfig: (c: TimerConfig) => void
     resetTimer: () => void
 }
@@ -49,6 +50,8 @@ export const useFocusStore = create<FocusStore>()(
             currentSessionId: null,
             selectedTaskId: null,
             startedAt: null,
+            tickStartedAt: null,
+            tickStartTimeLeft: null,
             config: DEFAULT_CONFIG,
 
             setSessionType: (t) => set({ sessionType: t }),
@@ -58,6 +61,7 @@ export const useFocusStore = create<FocusStore>()(
             setCurrentSessionId: (id) => set({ currentSessionId: id }),
             setSelectedTaskId: (id) => set({ selectedTaskId: id }),
             setStartedAt: (s) => set({ startedAt: s }),
+            setTickStart: (ts, tl) => set({ tickStartedAt: ts, tickStartTimeLeft: tl }),
             setConfig: (c) => set({ config: c }),
             resetTimer: () => {
                 const { config, sessionType } = get()
@@ -70,12 +74,13 @@ export const useFocusStore = create<FocusStore>()(
                     timeLeft: duration * 60,
                     currentSessionId: null,
                     startedAt: null,
+                    tickStartedAt: null,
+                    tickStartTimeLeft: null,
                 })
             },
         }),
         {
             name: 'catalyst-focus',
-            // Don't persist running state — if they close the browser, timer stops
             partialize: (state) => ({
                 sessionType: state.sessionType,
                 timerState: state.timerState === 'running' ? 'paused' : state.timerState,
@@ -83,6 +88,7 @@ export const useFocusStore = create<FocusStore>()(
                 completedSessions: state.completedSessions,
                 selectedTaskId: state.selectedTaskId,
                 config: state.config,
+                currentSessionId: state.currentSessionId,
             }),
         }
     )

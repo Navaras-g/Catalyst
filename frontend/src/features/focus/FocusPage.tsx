@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Play, Pause, RotateCcw, SkipForward,
     Timer, Coffee, Brain, Settings,
-    CheckCircle2, Clock, Flame,
+    CheckCircle2, Clock, Flame, TrendingUp,
+    TrendingDown, Award, Zap, StopCircle,
 } from 'lucide-react'
 import { focusApi } from './focusApi'
 import type { SessionType } from './focusApi'
@@ -48,78 +49,117 @@ function formatTime(seconds: number) {
 }
 
 function formatMinutes(mins: number) {
+    if (mins === 0) return '0m'
     if (mins < 60) return `${mins}m`
-    return `${Math.floor(mins / 60)}h ${mins % 60}m`
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+}
+
+function formatHours(mins: number) {
+    const h = (mins / 60).toFixed(1)
+    return `${h}h`
 }
 
 function useChime() {
     const playChime = useCallback((type: 'work_done' | 'break_done') => {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-        const play = (freq: number, start: number, duration: number, gain: number) => {
-            const osc = ctx.createOscillator()
-            const gainNode = ctx.createGain()
-            osc.connect(gainNode)
-            gainNode.connect(ctx.destination)
-            osc.type = 'sine'
-            osc.frequency.setValueAtTime(freq, ctx.currentTime + start)
-            gainNode.gain.setValueAtTime(0, ctx.currentTime + start)
-            gainNode.gain.linearRampToValueAtTime(gain, ctx.currentTime + start + 0.01)
-            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration)
-            osc.start(ctx.currentTime + start)
-            osc.stop(ctx.currentTime + start + duration)
-        }
-        if (type === 'work_done') {
-            play(523, 0.0, 0.4, 0.4)
-            play(659, 0.2, 0.4, 0.4)
-            play(784, 0.4, 0.6, 0.4)
-        } else {
-            play(659, 0.0, 0.4, 0.3)
-            play(523, 0.2, 0.6, 0.3)
+        try {
+            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+            const play = (freq: number, start: number, duration: number, gain: number) => {
+                const osc = ctx.createOscillator()
+                const gainNode = ctx.createGain()
+                osc.connect(gainNode)
+                gainNode.connect(ctx.destination)
+                osc.type = 'sine'
+                osc.frequency.setValueAtTime(freq, ctx.currentTime + start)
+                gainNode.gain.setValueAtTime(0, ctx.currentTime + start)
+                gainNode.gain.linearRampToValueAtTime(gain, ctx.currentTime + start + 0.01)
+                gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration)
+                osc.start(ctx.currentTime + start)
+                osc.stop(ctx.currentTime + start + duration)
+            }
+            if (type === 'work_done') {
+                play(523, 0.0, 0.4, 0.4)
+                play(659, 0.2, 0.4, 0.4)
+                play(784, 0.4, 0.6, 0.4)
+            } else {
+                play(659, 0.0, 0.4, 0.3)
+                play(523, 0.2, 0.6, 0.3)
+            }
+        } catch (e) {
+            // Audio not available
         }
     }, [])
     return playChime
 }
 
 function CircularTimer({
-    progress, sessionType, timeLeft, state,
+    progress, sessionType, timeLeft, state, totalSeconds,
 }: {
     progress: number
     sessionType: SessionType
     timeLeft: number
     state: TimerState
+    totalSeconds: number
 }) {
     const size = 280
-    const strokeWidth = 8
+    const strokeWidth = 10
     const radius = (size - strokeWidth) / 2
     const circumference = 2 * Math.PI * radius
     const offset = circumference - (progress / 100) * circumference
     const config = sessionTypeConfig[sessionType]
+    const pct = Math.round(progress)
 
     return (
-        <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+        <div
+            className="relative flex items-center justify-center"
+            style={{ width: size, height: size }}
+        >
+            {/* Outer glow */}
+            <div
+                className="absolute rounded-full opacity-10 blur-2xl"
+                style={{
+                    width: size * 0.7,
+                    height: size * 0.7,
+                    background: config.ring,
+                }}
+            />
             <svg width={size} height={size} className="-rotate-90">
+                {/* Track */}
                 <circle
                     cx={size / 2} cy={size / 2} r={radius}
-                    fill="none" stroke="rgba(99,130,255,0.06)" strokeWidth={strokeWidth}
+                    fill="none"
+                    stroke="rgba(99,130,255,0.06)"
+                    strokeWidth={strokeWidth}
                 />
+                {/* Progress */}
                 <circle
                     cx={size / 2} cy={size / 2} r={radius}
-                    fill="none" strokeWidth={strokeWidth} strokeLinecap="round"
-                    strokeDasharray={circumference} strokeDashoffset={offset}
+                    fill="none"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
                     stroke={config.ring}
                     style={{
-                        transition: 'stroke-dashoffset 1s linear',
-                        filter: `drop-shadow(0 0 6px ${config.ring}60)`,
+                        transition: 'stroke-dashoffset 0.5s linear',
+                        filter: `drop-shadow(0 0 8px ${config.ring}80)`,
                     }}
                 />
             </svg>
+
             <div className="absolute flex flex-col items-center">
-                <div className={cn('mb-1 flex items-center gap-1.5 text-sm font-medium', config.color)}>
+                <div className={cn('mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider', config.color)}>
                     {config.icon}
                     {config.label}
                 </div>
-                <span className="text-6xl font-bold tabular-nums text-white">
+                <span className="text-6xl font-bold tabular-nums text-white" style={{
+                    textShadow: state === 'running' ? `0 0 20px ${config.ring}40` : 'none',
+                }}>
                     {formatTime(timeLeft)}
+                </span>
+                <span className="mt-1 text-xs" style={{ color: '#3a5070' }}>
+                    {pct}% complete
                 </span>
                 {state === 'running' && (
                     <motion.div
@@ -157,7 +197,6 @@ function SettingsPanel({
         { label: 'Long Break (min)', key: 'longBreak' },
         { label: 'Sessions until long break', key: 'sessionsUntilLongBreak' },
     ]
-
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -189,9 +228,7 @@ function SettingsPanel({
                 ))}
             </div>
             <div className="mt-4 flex justify-end gap-2">
-                <button
-                    onClick={onClose}
-                    className="rounded-lg px-3 py-1.5 text-sm"
+                <button onClick={onClose} className="rounded-lg px-3 py-1.5 text-sm"
                     style={{ color: '#6b89b4' }}
                 >
                     Cancel
@@ -208,20 +245,21 @@ function SettingsPanel({
     )
 }
 
-// ─── Global interval ref — lives outside component so it survives navigation ──
+// ─── Global interval — survives navigation ────────────────────────────────────
 let globalIntervalRef: ReturnType<typeof setInterval> | null = null
 
 export default function FocusPage() {
     const queryClient = useQueryClient()
     const playChime = useChime()
     const [showSettings, setShowSettings] = useState(false)
+    const finishHandlerRef = useRef<(() => void) | null>(null)
 
     const {
         config, sessionType, timerState, timeLeft, completedSessions,
-        selectedTaskId, currentSessionId,
+        selectedTaskId, currentSessionId, startedAt,
         setConfig, setSessionType, setTimerState, setTimeLeft,
         setCompletedSessions, setSelectedTaskId, setCurrentSessionId,
-        setStartedAt, resetTimer,
+        setStartedAt, setTickStart, resetTimer,
     } = useFocusStore()
 
     const totalSeconds = (
@@ -230,7 +268,10 @@ export default function FocusPage() {
                 config.longBreak
     ) * 60
 
-    const progress = ((totalSeconds - timeLeft) / totalSeconds) * 100
+    const progress = Math.min(
+        ((totalSeconds - timeLeft) / totalSeconds) * 100,
+        100
+    )
 
     const getDurationForType = useCallback((type: SessionType) => {
         if (type === 'work') return config.work
@@ -238,17 +279,23 @@ export default function FocusPage() {
         return config.longBreak
     }, [config])
 
+    // Calculate elapsed minutes for early finish
+    const getElapsedMinutes = useCallback(() => {
+        const elapsed = totalSeconds - useFocusStore.getState().timeLeft
+        return Math.max(1, Math.round(elapsed / 60))
+    }, [totalSeconds])
+
     const { data: tasks = [] } = useQuery({
         queryKey: ['tasks'],
         queryFn: () => taskApi.list({ status: 'todo' }),
     })
 
-    const { data: stats } = useQuery({
+    const { data: stats, refetch: refetchStats } = useQuery({
         queryKey: ['focus-stats'],
         queryFn: focusApi.stats,
     })
 
-    const { data: sessions = [] } = useQuery({
+    const { data: sessions = [], refetch: refetchSessions } = useQuery({
         queryKey: ['focus-sessions'],
         queryFn: focusApi.list,
     })
@@ -290,13 +337,18 @@ export default function FocusPage() {
             })
         }
 
-        const { sessionType: sType, completedSessions: cs, config: cfg } = useFocusStore.getState()
+        const {
+            sessionType: sType,
+            completedSessions: cs,
+            config: cfg,
+        } = useFocusStore.getState()
 
         if (sType === 'work') {
             playChime('work_done')
             const next = cs + 1
             setCompletedSessions(next)
-            const nextType = next % cfg.sessionsUntilLongBreak === 0 ? 'long_break' : 'short_break'
+            const nextType = next % cfg.sessionsUntilLongBreak === 0
+                ? 'long_break' : 'short_break'
             setTimeout(() => {
                 setSessionType(nextType)
                 setTimeLeft(
@@ -319,34 +371,45 @@ export default function FocusPage() {
         setCompletedSessions, setSessionType, setTimeLeft, setCurrentSessionId,
     ])
 
-    // ─── Global timer — starts/stops based on timerState ─────────────────────
+    // Keep ref up to date so the interval always calls the latest version
+    useEffect(() => {
+        finishHandlerRef.current = handleFinish
+    }, [handleFinish])
+
+    // ─── Timestamp-based timer — immune to browser throttling ─────────────────
     useEffect(() => {
         if (timerState === 'running') {
-            // Clear any existing interval first
             stopGlobalInterval()
-            // Start a new global interval
+
+            // Record when this running period started and what timeLeft was then
+            const tickStart = Date.now()
+            const tickStartLeft = useFocusStore.getState().timeLeft
+            setTickStart(tickStart, tickStartLeft)
+
             globalIntervalRef = setInterval(() => {
-                const current = useFocusStore.getState().timeLeft
-                if (current <= 1) {
-                    handleFinish()
+                const state = useFocusStore.getState()
+                // Calculate true elapsed time from timestamp — not tick count
+                const elapsed = Math.floor((Date.now() - tickStart) / 1000)
+                const newTimeLeft = Math.max(0, tickStartLeft - elapsed)
+
+                if (newTimeLeft <= 0) {
+                    useFocusStore.getState().setTimeLeft(0)
+                    finishHandlerRef.current?.()
                 } else {
-                    useFocusStore.getState().setTimeLeft(current - 1)
+                    useFocusStore.getState().setTimeLeft(newTimeLeft)
                 }
-            }, 1000)
+            }, 500) // Check every 500ms for responsiveness, but time based on real clock
         } else {
             stopGlobalInterval()
         }
 
-        // On unmount (navigation), do NOT clear the interval if running
-        // The global interval keeps ticking
         return () => {
-            // Only clear if not running — if running, let it continue globally
             const state = useFocusStore.getState().timerState
             if (state !== 'running') {
                 stopGlobalInterval()
             }
         }
-    }, [timerState, handleFinish, stopGlobalInterval])
+    }, [timerState, stopGlobalInterval, setTickStart])
 
     const handleStart = () => {
         if (timerState === 'idle') {
@@ -382,6 +445,39 @@ export default function FocusPage() {
         setCurrentSessionId(null)
     }
 
+    // ─── Early finish — record elapsed time ───────────────────────────────────
+    const handleFinishEarly = () => {
+        stopGlobalInterval()
+        setTimerState('finished')
+
+        const elapsed = getElapsedMinutes()
+        const sid = useFocusStore.getState().currentSessionId
+
+        if (sid) {
+            updateSession.mutate({
+                id: sid,
+                data: {
+                    completed: true,
+                    ended_at: new Date().toISOString(),
+                    duration_minutes: elapsed,
+                },
+            })
+        }
+
+        playChime('work_done')
+        const next = completedSessions + 1
+        setCompletedSessions(next)
+        const nextType = next % config.sessionsUntilLongBreak === 0
+            ? 'long_break' : 'short_break'
+
+        setTimeout(() => {
+            setSessionType(nextType)
+            setTimeLeft(getDurationForType(nextType) * 60)
+            setTimerState('idle')
+            setCurrentSessionId(null)
+        }, 1500)
+    }
+
     const handleConfigChange = (newConfig: any) => {
         stopGlobalInterval()
         setConfig(newConfig)
@@ -390,11 +486,16 @@ export default function FocusPage() {
         setCurrentSessionId(null)
     }
 
+    const weekChange = stats?.week_change
+    const allTimeHours = formatHours(stats?.all_time_minutes ?? 0)
+
     return (
         <div className="flex h-full flex-col">
             <Header title="Focus" subtitle="Deep work sessions" />
             <div className="flex-1 overflow-y-auto p-6">
-                <div className="mx-auto max-w-4xl">
+                <div className="mx-auto max-w-5xl space-y-6">
+
+                    {/* Main grid */}
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
                         {/* Timer column */}
@@ -420,7 +521,7 @@ export default function FocusPage() {
                                                 }
                                             }}
                                             disabled={timerState !== 'idle'}
-                                            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium transition-all"
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium transition-all disabled:cursor-not-allowed"
                                             style={{
                                                 background: sessionType === type
                                                     ? 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(99,102,241,0.15))'
@@ -445,7 +546,7 @@ export default function FocusPage() {
 
                             {/* Timer card */}
                             <div
-                                className="flex flex-col items-center rounded-2xl py-8"
+                                className="relative flex flex-col items-center overflow-hidden rounded-2xl py-8"
                                 style={{
                                     background: 'rgba(10,22,40,0.8)',
                                     border: '1px solid rgba(99,179,255,0.08)',
@@ -456,6 +557,7 @@ export default function FocusPage() {
                                     sessionType={sessionType}
                                     timeLeft={timeLeft}
                                     state={timerState}
+                                    totalSeconds={totalSeconds}
                                 />
 
                                 {/* Session dots */}
@@ -463,14 +565,12 @@ export default function FocusPage() {
                                     {Array.from({ length: config.sessionsUntilLongBreak }).map((_, i) => (
                                         <div
                                             key={i}
-                                            className="h-2 w-2 rounded-full transition"
+                                            className="h-2 w-2 rounded-full transition-all duration-300"
                                             style={{
                                                 background: i < (completedSessions % config.sessionsUntilLongBreak)
-                                                    ? '#6366f1'
-                                                    : 'rgba(99,130,255,0.1)',
+                                                    ? '#6366f1' : 'rgba(99,130,255,0.1)',
                                                 boxShadow: i < (completedSessions % config.sessionsUntilLongBreak)
-                                                    ? '0 0 6px rgba(99,102,241,0.5)'
-                                                    : 'none',
+                                                    ? '0 0 6px rgba(99,102,241,0.6)' : 'none',
                                             }}
                                         />
                                     ))}
@@ -484,13 +584,16 @@ export default function FocusPage() {
                                         style={{ color: '#3a5070' }}
                                         onMouseEnter={(e) => e.currentTarget.style.color = '#6b89b4'}
                                         onMouseLeave={(e) => e.currentTarget.style.color = '#3a5070'}
+                                        title="Reset"
                                     >
                                         <RotateCcw size={20} />
                                     </button>
 
-                                    <button
+                                    <motion.button
                                         onClick={timerState === 'running' ? handlePause : handleStart}
-                                        className="flex h-16 w-16 items-center justify-center rounded-2xl text-white transition-all active:scale-95"
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className="flex h-16 w-16 items-center justify-center rounded-2xl text-white"
                                         style={{
                                             background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
                                             boxShadow: '0 0 30px rgba(99,102,241,0.4), 0 0 60px rgba(99,102,241,0.15)',
@@ -500,7 +603,7 @@ export default function FocusPage() {
                                             ? <Pause size={28} />
                                             : <Play size={28} className="translate-x-0.5" />
                                         }
-                                    </button>
+                                    </motion.button>
 
                                     <button
                                         onClick={handleSkip}
@@ -508,13 +611,44 @@ export default function FocusPage() {
                                         style={{ color: '#3a5070' }}
                                         onMouseEnter={(e) => e.currentTarget.style.color = '#6b89b4'}
                                         onMouseLeave={(e) => e.currentTarget.style.color = '#3a5070'}
+                                        title="Skip"
                                     >
                                         <SkipForward size={20} />
                                     </button>
                                 </div>
 
+                                {/* Early finish button */}
+                                <AnimatePresence>
+                                    {(timerState === 'running' || timerState === 'paused') &&
+                                        sessionType === 'work' && (
+                                            <motion.button
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 8 }}
+                                                onClick={handleFinishEarly}
+                                                className="mt-4 flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all"
+                                                style={{
+                                                    background: 'rgba(16,185,129,0.08)',
+                                                    border: '1px solid rgba(16,185,129,0.2)',
+                                                    color: '#34d399',
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = 'rgba(16,185,129,0.15)'
+                                                    e.currentTarget.style.boxShadow = '0 0 12px rgba(16,185,129,0.2)'
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = 'rgba(16,185,129,0.08)'
+                                                    e.currentTarget.style.boxShadow = 'none'
+                                                }}
+                                            >
+                                                <StopCircle size={15} />
+                                                Finish early — record {getElapsedMinutes()}m
+                                            </motion.button>
+                                        )}
+                                </AnimatePresence>
+
                                 {/* Task selector */}
-                                <div className="mt-6 w-full max-w-xs px-6">
+                                <div className="mt-5 w-full max-w-xs px-6">
                                     <select
                                         value={selectedTaskId ?? ''}
                                         onChange={(e) =>
@@ -587,16 +721,13 @@ export default function FocusPage() {
                                             icon: <Timer size={14} />,
                                         },
                                         {
-                                            label: 'Total sessions',
-                                            value: String(stats?.total_sessions ?? 0),
+                                            label: 'This week',
+                                            value: formatMinutes(stats?.week_minutes ?? 0),
                                             icon: <Flame size={14} />,
                                         },
                                     ].map(({ label, value, icon }) => (
                                         <div key={label} className="flex items-center justify-between">
-                                            <div
-                                                className="flex items-center gap-2 text-sm"
-                                                style={{ color: '#6b89b4' }}
-                                            >
+                                            <div className="flex items-center gap-2 text-sm" style={{ color: '#6b89b4' }}>
                                                 <span style={{ color: '#3a5070' }}>{icon}</span>
                                                 {label}
                                             </div>
@@ -614,7 +745,26 @@ export default function FocusPage() {
                                     border: '1px solid rgba(99,179,255,0.08)',
                                 }}
                             >
-                                <h3 className="mb-4 text-sm font-semibold text-white">This Week</h3>
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h3 className="text-sm font-semibold text-white">This Week</h3>
+                                    {weekChange !== null && weekChange !== undefined && (
+                                        <div
+                                            className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                                            style={{
+                                                background: weekChange >= 0
+                                                    ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                                color: weekChange >= 0 ? '#34d399' : '#f87171',
+                                                border: `1px solid ${weekChange >= 0 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                                            }}
+                                        >
+                                            {weekChange >= 0
+                                                ? <TrendingUp size={10} />
+                                                : <TrendingDown size={10} />
+                                            }
+                                            {weekChange >= 0 ? '+' : ''}{weekChange}% vs last week
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="flex items-end gap-1.5" style={{ height: 80 }}>
                                     {(stats?.daily ?? []).map((d, i) => {
                                         const maxMins = Math.max(
@@ -623,7 +773,7 @@ export default function FocusPage() {
                                         const heightPct = (d.minutes / maxMins) * 100
                                         const isToday = i === (stats?.daily ?? []).length - 1
                                         return (
-                                            <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                                            <div key={i} className="group flex flex-1 flex-col items-center gap-1">
                                                 <div
                                                     className="relative w-full rounded-t-sm"
                                                     style={{ height: 56, background: 'rgba(99,130,255,0.05)' }}
@@ -642,6 +792,18 @@ export default function FocusPage() {
                                                                 : 'none',
                                                         }}
                                                     />
+                                                    {d.minutes > 0 && (
+                                                        <div
+                                                            className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-1 py-0.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            style={{
+                                                                background: 'rgba(10,22,40,0.9)',
+                                                                color: '#6b89b4',
+                                                                border: '1px solid rgba(99,130,255,0.1)',
+                                                            }}
+                                                        >
+                                                            {formatMinutes(d.minutes)}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <span
                                                     className="text-xs"
@@ -666,14 +828,9 @@ export default function FocusPage() {
                                     border: '1px solid rgba(99,179,255,0.08)',
                                 }}
                             >
-                                <h3 className="mb-4 text-sm font-semibold text-white">
-                                    Recent Sessions
-                                </h3>
+                                <h3 className="mb-4 text-sm font-semibold text-white">Recent</h3>
                                 {sessions.length === 0 ? (
-                                    <p
-                                        className="py-4 text-center text-xs"
-                                        style={{ color: '#3a5070' }}
-                                    >
+                                    <p className="py-4 text-center text-xs" style={{ color: '#3a5070' }}>
                                         No sessions yet
                                     </p>
                                 ) : (
@@ -687,23 +844,16 @@ export default function FocusPage() {
                                                     border: '1px solid rgba(99,130,255,0.06)',
                                                 }}
                                             >
-                                                <div className="flex items-center gap-2">
-                                                    <CheckCircle2
-                                                        size={14}
-                                                        style={{ color: '#34d399' }}
-                                                        className="shrink-0"
-                                                    />
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <CheckCircle2 size={14} style={{ color: '#34d399' }} className="shrink-0" />
                                                     <span
-                                                        className="truncate text-xs max-w-[120px]"
+                                                        className="truncate text-xs"
                                                         style={{ color: '#6b89b4' }}
                                                     >
                                                         {s.task_title ?? 'No task'}
                                                     </span>
                                                 </div>
-                                                <span
-                                                    className="text-xs shrink-0"
-                                                    style={{ color: '#3a5070' }}
-                                                >
+                                                <span className="shrink-0 text-xs ml-2" style={{ color: '#3a5070' }}>
                                                     {s.duration_minutes}m
                                                 </span>
                                             </div>
@@ -711,9 +861,162 @@ export default function FocusPage() {
                                     </div>
                                 )}
                             </div>
-
                         </div>
                     </div>
+
+                    {/* ── All-time report ─────────────────────────────────────────────── */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="relative overflow-hidden rounded-2xl p-6"
+                        style={{
+                            background: 'linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(59,130,246,0.04) 100%)',
+                            border: '1px solid rgba(99,102,241,0.12)',
+                        }}
+                    >
+                        {/* Decorative glow */}
+                        <div
+                            className="absolute -top-16 -right-16 h-48 w-48 rounded-full blur-3xl opacity-10"
+                            style={{ background: 'radial-gradient(circle, #6366f1, transparent)' }}
+                        />
+
+                        <div className="relative">
+                            <div className="mb-5 flex items-center gap-2.5">
+                                <div
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg"
+                                    style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
+                                >
+                                    <Award size={16} className="text-white" />
+                                </div>
+                                <h3 className="font-semibold text-white">All-Time Report</h3>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                                {/* Total hours */}
+                                <div
+                                    className="rounded-xl p-4"
+                                    style={{
+                                        background: 'rgba(10,22,40,0.6)',
+                                        border: '1px solid rgba(99,130,255,0.08)',
+                                    }}
+                                >
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Clock size={14} style={{ color: '#3a5070' }} />
+                                        <span className="text-xs" style={{ color: '#3a5070' }}>Total Focus</span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-white">{allTimeHours}</p>
+                                    <p className="mt-0.5 text-xs" style={{ color: '#3a5070' }}>
+                                        {formatMinutes(stats?.all_time_minutes ?? 0)}
+                                    </p>
+                                </div>
+
+                                {/* Total sessions */}
+                                <div
+                                    className="rounded-xl p-4"
+                                    style={{
+                                        background: 'rgba(10,22,40,0.6)',
+                                        border: '1px solid rgba(99,130,255,0.08)',
+                                    }}
+                                >
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Timer size={14} style={{ color: '#3a5070' }} />
+                                        <span className="text-xs" style={{ color: '#3a5070' }}>Sessions</span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-white">
+                                        {stats?.total_sessions ?? 0}
+                                    </p>
+                                    <p className="mt-0.5 text-xs" style={{ color: '#3a5070' }}>completed</p>
+                                </div>
+
+                                {/* Best day */}
+                                <div
+                                    className="rounded-xl p-4"
+                                    style={{
+                                        background: 'rgba(10,22,40,0.6)',
+                                        border: '1px solid rgba(99,130,255,0.08)',
+                                    }}
+                                >
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Award size={14} style={{ color: '#3a5070' }} />
+                                        <span className="text-xs" style={{ color: '#3a5070' }}>Best Day</span>
+                                    </div>
+                                    <p className="text-lg font-bold text-white">
+                                        {stats?.best_day_minutes
+                                            ? formatMinutes(stats.best_day_minutes)
+                                            : '—'}
+                                    </p>
+                                    <p className="mt-0.5 text-xs" style={{ color: '#3a5070' }}>
+                                        {stats?.best_day ?? 'no data yet'}
+                                    </p>
+                                </div>
+
+                                {/* Avg per session */}
+                                <div
+                                    className="rounded-xl p-4"
+                                    style={{
+                                        background: 'rgba(10,22,40,0.6)',
+                                        border: '1px solid rgba(99,130,255,0.08)',
+                                    }}
+                                >
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Zap size={14} style={{ color: '#3a5070' }} />
+                                        <span className="text-xs" style={{ color: '#3a5070' }}>Avg Session</span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-white">
+                                        {stats?.total_sessions
+                                            ? Math.round((stats.all_time_minutes ?? 0) / stats.total_sessions)
+                                            : 0}m
+                                    </p>
+                                    <p className="mt-0.5 text-xs" style={{ color: '#3a5070' }}>per session</p>
+                                </div>
+                            </div>
+
+                            {/* Milestone bar */}
+                            {(stats?.all_time_minutes ?? 0) > 0 && (
+                                <div className="mt-5">
+                                    {(() => {
+                                        const milestones = [60, 300, 600, 1200, 3000, 6000]
+                                        const totalMins = stats?.all_time_minutes ?? 0
+                                        const nextMilestone = milestones.find((m) => m > totalMins) ?? milestones[milestones.length - 1]
+                                        const prevMilestone = milestones[milestones.indexOf(nextMilestone) - 1] ?? 0
+                                        const pct = Math.min(
+                                            ((totalMins - prevMilestone) / (nextMilestone - prevMilestone)) * 100,
+                                            100
+                                        )
+                                        return (
+                                            <div>
+                                                <div className="mb-1.5 flex items-center justify-between text-xs">
+                                                    <span style={{ color: '#3a5070' }}>
+                                                        Next milestone: {formatMinutes(nextMilestone)}
+                                                    </span>
+                                                    <span style={{ color: '#6b89b4' }}>
+                                                        {formatMinutes(totalMins)} / {formatMinutes(nextMilestone)}
+                                                    </span>
+                                                </div>
+                                                <div
+                                                    className="h-1.5 w-full overflow-hidden rounded-full"
+                                                    style={{ background: 'rgba(99,130,255,0.08)' }}
+                                                >
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${pct}%` }}
+                                                        transition={{ duration: 1.2, ease: 'easeOut' }}
+                                                        className="h-full rounded-full"
+                                                        style={{
+                                                            background: 'linear-gradient(90deg, #3b82f6, #6366f1)',
+                                                            boxShadow: '0 0 8px rgba(99,102,241,0.4)',
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )
+                                    })()}
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+
                 </div>
             </div>
         </div>

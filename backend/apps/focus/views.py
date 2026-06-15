@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, Count
 
 from .models import FocusSession
 from .serializers import FocusSessionSerializer
@@ -45,6 +45,7 @@ class FocusStatsView(APIView):
         user = request.user
         today = timezone.now().date()
         week_start = today - timezone.timedelta(days=today.weekday())
+        last_week_start = week_start - timezone.timedelta(weeks=1)
 
         base = FocusSession.objects.filter(
             user=user,
@@ -52,18 +53,48 @@ class FocusStatsView(APIView):
             completed=True,
         )
 
+        # ── Today ──────────────────────────────────────────────────────────────
         today_minutes = base.filter(
             started_at__date=today
         ).aggregate(total=Sum('duration_minutes'))['total'] or 0
 
+        today_sessions = base.filter(started_at__date=today).count()
+
+        # ── This week ──────────────────────────────────────────────────────────
         week_minutes = base.filter(
             started_at__date__gte=week_start
         ).aggregate(total=Sum('duration_minutes'))['total'] or 0
 
-        today_sessions = base.filter(started_at__date=today).count()
-        total_sessions = base.count()
+        # ── Last week ──────────────────────────────────────────────────────────
+        last_week_minutes = base.filter(
+            started_at__date__gte=last_week_start,
+            started_at__date__lt=week_start,
+        ).aggregate(total=Sum('duration_minutes'))['total'] or 0
 
-        # Daily breakdown for the past 7 days
+        # ── All time ───────────────────────────────────────────────────────────
+        all_time = base.aggregate(
+            total_minutes=Sum('duration_minutes'),
+            total_sessions=Count('id'),
+        )
+        all_time_minutes = all_time['total_minutes'] or 0
+        total_sessions = all_time['total_sessions'] or 0
+
+        # ── Best day ever ─────────────────────────────────────────────────────
+        from django.db.models.functions import TruncDate
+        daily_totals = base.annotate(
+            day=TruncDate('started_at')
+        ).values('day').annotate(
+            total=Sum('duration_minutes')
+        ).order_by('-total')
+
+        best_day = None
+        best_day_minutes = 0
+        if daily_totals.exists():
+            best = daily_totals.first()
+            best_day = best['day'].strftime('%b %d, %Y')
+            best_day_minutes = best['total']
+
+        # ── Daily breakdown last 7 days ────────────────────────────────────────
         daily = []
         for i in range(6, -1, -1):
             day = today - timezone.timedelta(days=i)
@@ -75,10 +106,22 @@ class FocusStatsView(APIView):
                 'minutes': mins,
             })
 
+        # ── Week over week change ──────────────────────────────────────────────
+        week_change = None
+        if last_week_minutes > 0:
+            week_change = round(
+                ((week_minutes - last_week_minutes) / last_week_minutes) * 100
+            )
+
         return Response({
             'today_minutes': today_minutes,
-            'week_minutes': week_minutes,
             'today_sessions': today_sessions,
+            'week_minutes': week_minutes,
+            'last_week_minutes': last_week_minutes,
+            'week_change': week_change,
+            'all_time_minutes': all_time_minutes,
             'total_sessions': total_sessions,
+            'best_day': best_day,
+            'best_day_minutes': best_day_minutes,
             'daily': daily,
         })
