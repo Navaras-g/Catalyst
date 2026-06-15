@@ -12,6 +12,7 @@ import Header from '@/components/layout/Header'
 import { cn } from '@/lib/utils'
 import TaskModal from './TaskModal.tsx'
 import NLPTaskInput from './NLPTaskInput'
+import { useUIStore } from '@/store/uiStore'
 
 // ─── Priority config ──────────────────────────────────────────────────────────
 const priorityConfig: Record<Priority, { label: string; color: string; bg: string }> = {
@@ -239,7 +240,7 @@ type FilterStatus = 'all' | TaskStatus
 
 export default function TasksPage() {
     const queryClient = useQueryClient()
-    const [view, setView] = useState<ViewMode>('list')
+    const { tasksView: view, setTasksView: setView } = useUIStore()
     const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
     const [filterPriority, setFilterPriority] = useState<string>('all')
     const [modalOpen, setModalOpen] = useState(false)

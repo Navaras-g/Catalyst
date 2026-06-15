@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -11,25 +11,36 @@ import type { SessionType } from './focusApi'
 import { taskApi } from '@/features/tasks/taskApi'
 import Header from '@/components/layout/Header'
 import { cn } from '@/lib/utils'
+import { useFocusStore } from '@/store/focusStore'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type TimerState = 'idle' | 'running' | 'paused' | 'finished'
 
-interface TimerConfig {
-    work: number
-    shortBreak: number
-    longBreak: number
-    sessionsUntilLongBreak: number
+const sessionTypeConfig: Record<SessionType, {
+    label: string
+    icon: React.ReactNode
+    color: string
+    ring: string
+}> = {
+    work: {
+        label: 'Focus',
+        icon: <Brain size={16} />,
+        color: 'text-indigo-400',
+        ring: '#6366f1',
+    },
+    short_break: {
+        label: 'Short Break',
+        icon: <Coffee size={16} />,
+        color: 'text-green-400',
+        ring: '#10b981',
+    },
+    long_break: {
+        label: 'Long Break',
+        icon: <Coffee size={16} />,
+        color: 'text-blue-400',
+        ring: '#3b82f6',
+    },
 }
 
-const DEFAULT_CONFIG: TimerConfig = {
-    work: 25,
-    shortBreak: 5,
-    longBreak: 15,
-    sessionsUntilLongBreak: 4,
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTime(seconds: number) {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0')
     const s = (seconds % 60).toString().padStart(2, '0')
@@ -44,72 +55,33 @@ function formatMinutes(mins: number) {
 function useChime() {
     const playChime = useCallback((type: 'work_done' | 'break_done') => {
         const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-
         const play = (freq: number, start: number, duration: number, gain: number) => {
             const osc = ctx.createOscillator()
             const gainNode = ctx.createGain()
-
             osc.connect(gainNode)
             gainNode.connect(ctx.destination)
-
             osc.type = 'sine'
             osc.frequency.setValueAtTime(freq, ctx.currentTime + start)
-
             gainNode.gain.setValueAtTime(0, ctx.currentTime + start)
             gainNode.gain.linearRampToValueAtTime(gain, ctx.currentTime + start + 0.01)
             gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration)
-
             osc.start(ctx.currentTime + start)
             osc.stop(ctx.currentTime + start + duration)
         }
-
         if (type === 'work_done') {
-            // Three ascending notes — "you did it"
-            play(523, 0.0, 0.4, 0.4)   // C5
-            play(659, 0.2, 0.4, 0.4)   // E5
-            play(784, 0.4, 0.6, 0.4)   // G5
+            play(523, 0.0, 0.4, 0.4)
+            play(659, 0.2, 0.4, 0.4)
+            play(784, 0.4, 0.6, 0.4)
         } else {
-            // Two descending notes — "back to work"
-            play(659, 0.0, 0.4, 0.3)   // E5
-            play(523, 0.2, 0.6, 0.3)   // C5
+            play(659, 0.0, 0.4, 0.3)
+            play(523, 0.2, 0.6, 0.3)
         }
     }, [])
-
     return playChime
 }
 
-const sessionTypeConfig: Record<SessionType, {
-    label: string
-    icon: React.ReactNode
-    color: string
-    ring: string
-}> = {
-    work: {
-        label: 'Focus',
-        icon: <Brain size={16} />,
-        color: 'text-indigo-400',
-        ring: 'stroke-indigo-500',
-    },
-    short_break: {
-        label: 'Short Break',
-        icon: <Coffee size={16} />,
-        color: 'text-green-400',
-        ring: 'stroke-green-500',
-    },
-    long_break: {
-        label: 'Long Break',
-        icon: <Coffee size={16} />,
-        color: 'text-blue-400',
-        ring: 'stroke-blue-500',
-    },
-}
-
-// ─── Circular Progress ────────────────────────────────────────────────────────
 function CircularTimer({
-    progress,
-    sessionType,
-    timeLeft,
-    state,
+    progress, sessionType, timeLeft, state,
 }: {
     progress: number
     sessionType: SessionType
@@ -126,30 +98,21 @@ function CircularTimer({
     return (
         <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
             <svg width={size} height={size} className="-rotate-90">
-                {/* Track */}
                 <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="none"
-                    stroke="rgb(31,41,55)"
-                    strokeWidth={strokeWidth}
+                    cx={size / 2} cy={size / 2} r={radius}
+                    fill="none" stroke="rgba(99,130,255,0.06)" strokeWidth={strokeWidth}
                 />
-                {/* Progress */}
                 <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="none"
-                    strokeWidth={strokeWidth}
-                    strokeLinecap="round"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={offset}
-                    className={cn('transition-all duration-1000', config.ring)}
+                    cx={size / 2} cy={size / 2} r={radius}
+                    fill="none" strokeWidth={strokeWidth} strokeLinecap="round"
+                    strokeDasharray={circumference} strokeDashoffset={offset}
+                    stroke={config.ring}
+                    style={{
+                        transition: 'stroke-dashoffset 1s linear',
+                        filter: `drop-shadow(0 0 6px ${config.ring}60)`,
+                    }}
                 />
             </svg>
-
-            {/* Center content */}
             <div className="absolute flex flex-col items-center">
                 <div className={cn('mb-1 flex items-center gap-1.5 text-sm font-medium', config.color)}>
                     {config.icon}
@@ -167,7 +130,8 @@ function CircularTimer({
                         {[0, 1, 2].map((i) => (
                             <motion.div
                                 key={i}
-                                className="h-1 w-1 rounded-full bg-indigo-400"
+                                className="h-1 w-1 rounded-full"
+                                style={{ background: config.ring }}
                                 animate={{ opacity: [0.3, 1, 0.3] }}
                                 transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
                             />
@@ -179,41 +143,46 @@ function CircularTimer({
     )
 }
 
-// ─── Settings Panel ───────────────────────────────────────────────────────────
 function SettingsPanel({
-    config,
-    onChange,
-    onClose,
+    config, onChange, onClose,
 }: {
-    config: TimerConfig
-    onChange: (c: TimerConfig) => void
+    config: any
+    onChange: (c: any) => void
     onClose: () => void
 }) {
     const [local, setLocal] = useState(config)
-    const inputClass = 'w-20 rounded-lg border border-white/5 bg-gray-800 px-3 py-1.5 text-center text-sm text-white outline-none focus:border-indigo-500'
+    const keys = [
+        { label: 'Focus (min)', key: 'work' },
+        { label: 'Short Break (min)', key: 'shortBreak' },
+        { label: 'Long Break (min)', key: 'longBreak' },
+        { label: 'Sessions until long break', key: 'sessionsUntilLongBreak' },
+    ]
 
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="rounded-2xl border border-white/10 bg-gray-900 p-5"
+            className="rounded-2xl p-5"
+            style={{
+                background: 'rgba(10,22,40,0.8)',
+                border: '1px solid rgba(99,179,255,0.08)',
+            }}
         >
             <h3 className="mb-4 font-semibold text-white">Timer Settings</h3>
             <div className="space-y-3">
-                {[
-                    { label: 'Focus (min)', key: 'work' },
-                    { label: 'Short Break (min)', key: 'shortBreak' },
-                    { label: 'Long Break (min)', key: 'longBreak' },
-                    { label: 'Sessions until long break', key: 'sessionsUntilLongBreak' },
-                ].map(({ label, key }) => (
+                {keys.map(({ label, key }) => (
                     <div key={key} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-400">{label}</span>
+                        <span className="text-sm" style={{ color: '#6b89b4' }}>{label}</span>
                         <input
                             type="number"
-                            value={local[key as keyof TimerConfig]}
+                            value={local[key]}
                             onChange={(e) => setLocal({ ...local, [key]: Number(e.target.value) })}
-                            className={inputClass}
+                            className="w-20 rounded-lg px-3 py-1.5 text-center text-sm text-white outline-none"
+                            style={{
+                                background: 'rgba(15,31,61,0.8)',
+                                border: '1px solid rgba(99,130,255,0.12)',
+                            }}
                             min={1}
                         />
                     </div>
@@ -222,13 +191,15 @@ function SettingsPanel({
             <div className="mt-4 flex justify-end gap-2">
                 <button
                     onClick={onClose}
-                    className="rounded-lg px-3 py-1.5 text-sm text-gray-400 hover:text-white"
+                    className="rounded-lg px-3 py-1.5 text-sm"
+                    style={{ color: '#6b89b4' }}
                 >
                     Cancel
                 </button>
                 <button
                     onClick={() => { onChange(local); onClose() }}
-                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
+                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-white"
+                    style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
                 >
                     Save
                 </button>
@@ -237,20 +208,21 @@ function SettingsPanel({
     )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Global interval ref — lives outside component so it survives navigation ──
+let globalIntervalRef: ReturnType<typeof setInterval> | null = null
+
 export default function FocusPage() {
     const queryClient = useQueryClient()
-    const [config, setConfig] = useState<TimerConfig>(DEFAULT_CONFIG)
-    const [sessionType, setSessionType] = useState<SessionType>('work')
-    const [timerState, setTimerState] = useState<TimerState>('idle')
-    const [timeLeft, setTimeLeft] = useState(DEFAULT_CONFIG.work * 60)
-    const [completedSessions, setCompletedSessions] = useState(0)
-    const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
-    const [showSettings, setShowSettings] = useState(false)
-    const [currentSessionId, setCurrentSessionId] = useState<number | null>(null)
-    const startedAtRef = useRef<string | null>(null)
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
     const playChime = useChime()
+    const [showSettings, setShowSettings] = useState(false)
+
+    const {
+        config, sessionType, timerState, timeLeft, completedSessions,
+        selectedTaskId, currentSessionId,
+        setConfig, setSessionType, setTimerState, setTimeLeft,
+        setCompletedSessions, setSelectedTaskId, setCurrentSessionId,
+        setStartedAt, resetTimer,
+    } = useFocusStore()
 
     const totalSeconds = (
         sessionType === 'work' ? config.work :
@@ -259,6 +231,12 @@ export default function FocusPage() {
     ) * 60
 
     const progress = ((totalSeconds - timeLeft) / totalSeconds) * 100
+
+    const getDurationForType = useCallback((type: SessionType) => {
+        if (type === 'work') return config.work
+        if (type === 'short_break') return config.shortBreak
+        return config.longBreak
+    }, [config])
 
     const { data: tasks = [] } = useQuery({
         queryKey: ['tasks'],
@@ -289,43 +267,41 @@ export default function FocusPage() {
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
             queryClient.invalidateQueries({ queryKey: ['xp'] })
             queryClient.invalidateQueries({ queryKey: ['achievements'] })
+            queryClient.invalidateQueries({ queryKey: ['insights'] })
         },
     })
 
-    const clearTimer = useCallback(() => {
-        if (intervalRef.current) clearInterval(intervalRef.current)
+    const stopGlobalInterval = useCallback(() => {
+        if (globalIntervalRef) {
+            clearInterval(globalIntervalRef)
+            globalIntervalRef = null
+        }
     }, [])
 
-    const getDurationForType = useCallback((type: SessionType) => {
-        if (type === 'work') return config.work
-        if (type === 'short_break') return config.shortBreak
-        return config.longBreak
-    }, [config])
-
     const handleFinish = useCallback(() => {
-        clearTimer()
+        stopGlobalInterval()
         setTimerState('finished')
 
-        if (currentSessionId) {
+        const { currentSessionId: sid } = useFocusStore.getState()
+        if (sid) {
             updateSession.mutate({
-                id: currentSessionId,
-                data: {
-                    completed: true,
-                    ended_at: new Date().toISOString(),
-                },
+                id: sid,
+                data: { completed: true, ended_at: new Date().toISOString() },
             })
         }
 
-        if (sessionType === 'work') {
+        const { sessionType: sType, completedSessions: cs, config: cfg } = useFocusStore.getState()
+
+        if (sType === 'work') {
             playChime('work_done')
-            const next = completedSessions + 1
+            const next = cs + 1
             setCompletedSessions(next)
-            const nextType = next % config.sessionsUntilLongBreak === 0
-                ? 'long_break'
-                : 'short_break'
+            const nextType = next % cfg.sessionsUntilLongBreak === 0 ? 'long_break' : 'short_break'
             setTimeout(() => {
                 setSessionType(nextType)
-                setTimeLeft(getDurationForType(nextType) * 60)
+                setTimeLeft(
+                    nextType === 'short_break' ? cfg.shortBreak * 60 : cfg.longBreak * 60
+                )
                 setTimerState('idle')
                 setCurrentSessionId(null)
             }, 1500)
@@ -333,34 +309,49 @@ export default function FocusPage() {
             playChime('break_done')
             setTimeout(() => {
                 setSessionType('work')
-                setTimeLeft(config.work * 60)
+                setTimeLeft(useFocusStore.getState().config.work * 60)
                 setTimerState('idle')
                 setCurrentSessionId(null)
             }, 1500)
         }
-    }, [clearTimer, completedSessions, config, currentSessionId, getDurationForType, playChime, sessionType, updateSession])
+    }, [
+        stopGlobalInterval, setTimerState, updateSession, playChime,
+        setCompletedSessions, setSessionType, setTimeLeft, setCurrentSessionId,
+    ])
 
+    // ─── Global timer — starts/stops based on timerState ─────────────────────
     useEffect(() => {
         if (timerState === 'running') {
-            intervalRef.current = setInterval(() => {
-                setTimeLeft((prev) => {
-                    if (prev <= 1) {
-                        handleFinish()
-                        return 0
-                    }
-                    return prev - 1
-                })
+            // Clear any existing interval first
+            stopGlobalInterval()
+            // Start a new global interval
+            globalIntervalRef = setInterval(() => {
+                const current = useFocusStore.getState().timeLeft
+                if (current <= 1) {
+                    handleFinish()
+                } else {
+                    useFocusStore.getState().setTimeLeft(current - 1)
+                }
             }, 1000)
         } else {
-            clearTimer()
+            stopGlobalInterval()
         }
-        return clearTimer
-    }, [timerState, handleFinish, clearTimer])
+
+        // On unmount (navigation), do NOT clear the interval if running
+        // The global interval keeps ticking
+        return () => {
+            // Only clear if not running — if running, let it continue globally
+            const state = useFocusStore.getState().timerState
+            if (state !== 'running') {
+                stopGlobalInterval()
+            }
+        }
+    }, [timerState, handleFinish, stopGlobalInterval])
 
     const handleStart = () => {
         if (timerState === 'idle') {
             const now = new Date().toISOString()
-            startedAtRef.current = now
+            setStartedAt(now)
             createSession.mutate({
                 task: selectedTaskId,
                 session_type: sessionType,
@@ -372,17 +363,18 @@ export default function FocusPage() {
         setTimerState('running')
     }
 
-    const handlePause = () => setTimerState('paused')
+    const handlePause = () => {
+        stopGlobalInterval()
+        setTimerState('paused')
+    }
 
     const handleReset = () => {
-        clearTimer()
-        setTimerState('idle')
-        setTimeLeft(getDurationForType(sessionType) * 60)
-        setCurrentSessionId(null)
+        stopGlobalInterval()
+        resetTimer()
     }
 
     const handleSkip = () => {
-        clearTimer()
+        stopGlobalInterval()
         const next: SessionType = sessionType === 'work' ? 'short_break' : 'work'
         setSessionType(next)
         setTimeLeft(getDurationForType(next) * 60)
@@ -390,7 +382,8 @@ export default function FocusPage() {
         setCurrentSessionId(null)
     }
 
-    const handleConfigChange = (newConfig: TimerConfig) => {
+    const handleConfigChange = (newConfig: any) => {
+        stopGlobalInterval()
         setConfig(newConfig)
         setTimeLeft(newConfig.work * 60)
         setTimerState('idle')
@@ -400,17 +393,20 @@ export default function FocusPage() {
     return (
         <div className="flex h-full flex-col">
             <Header title="Focus" subtitle="Deep work sessions" />
-
             <div className="flex-1 overflow-y-auto p-6">
                 <div className="mx-auto max-w-4xl">
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-                        {/* Timer Column */}
+                        {/* Timer column */}
                         <div className="lg:col-span-2 space-y-4">
 
-                            {/* Session type tabs */}
-                            <div className="flex items-center gap-2 rounded-2xl p-2"
-                                style={{ background: 'rgba(10,22,40,0.8)', border: '1px solid rgba(99,179,255,0.08)' }}
+                            {/* Session tabs */}
+                            <div
+                                className="flex items-center gap-2 rounded-2xl p-2"
+                                style={{
+                                    background: 'rgba(10,22,40,0.8)',
+                                    border: '1px solid rgba(99,179,255,0.08)',
+                                }}
                             >
                                 {(['work', 'short_break', 'long_break'] as SessionType[]).map((type) => {
                                     const c = sessionTypeConfig[type]
@@ -433,18 +429,23 @@ export default function FocusPage() {
                                                     ? '1px solid rgba(99,130,255,0.2)'
                                                     : '1px solid transparent',
                                                 color: sessionType === type ? 'white' : '#3a5070',
-                                                boxShadow: sessionType === type ? '0 0 12px rgba(99,102,241,0.1)' : 'none',
+                                                boxShadow: sessionType === type
+                                                    ? '0 0 12px rgba(99,102,241,0.1)'
+                                                    : 'none',
                                             }}
                                         >
-                                            <span className={sessionType === type ? c.color : ''}>{c.icon}</span>
+                                            <span className={sessionType === type ? c.color : ''}>
+                                                {c.icon}
+                                            </span>
                                             {c.label}
                                         </button>
                                     )
                                 })}
                             </div>
 
-                            {/* Timer */}
-                            <div className="flex flex-col items-center rounded-2xl py-8"
+                            {/* Timer card */}
+                            <div
+                                className="flex flex-col items-center rounded-2xl py-8"
                                 style={{
                                     background: 'rgba(10,22,40,0.8)',
                                     border: '1px solid rgba(99,179,255,0.08)',
@@ -462,12 +463,15 @@ export default function FocusPage() {
                                     {Array.from({ length: config.sessionsUntilLongBreak }).map((_, i) => (
                                         <div
                                             key={i}
-                                            className={cn(
-                                                'h-2 w-2 rounded-full transition',
-                                                i < (completedSessions % config.sessionsUntilLongBreak)
-                                                    ? 'bg-indigo-500'
-                                                    : 'bg-gray-700'
-                                            )}
+                                            className="h-2 w-2 rounded-full transition"
+                                            style={{
+                                                background: i < (completedSessions % config.sessionsUntilLongBreak)
+                                                    ? '#6366f1'
+                                                    : 'rgba(99,130,255,0.1)',
+                                                boxShadow: i < (completedSessions % config.sessionsUntilLongBreak)
+                                                    ? '0 0 6px rgba(99,102,241,0.5)'
+                                                    : 'none',
+                                            }}
                                         />
                                     ))}
                                 </div>
@@ -476,7 +480,10 @@ export default function FocusPage() {
                                 <div className="mt-6 flex items-center gap-4">
                                     <button
                                         onClick={handleReset}
-                                        className="rounded-xl p-3 text-gray-500 transition hover:bg-white/5 hover:text-white"
+                                        className="rounded-xl p-3 transition"
+                                        style={{ color: '#3a5070' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.color = '#6b89b4'}
+                                        onMouseLeave={(e) => e.currentTarget.style.color = '#3a5070'}
                                     >
                                         <RotateCcw size={20} />
                                     </button>
@@ -497,7 +504,10 @@ export default function FocusPage() {
 
                                     <button
                                         onClick={handleSkip}
-                                        className="rounded-xl p-3 text-gray-500 transition hover:bg-white/5 hover:text-white"
+                                        className="rounded-xl p-3 transition"
+                                        style={{ color: '#3a5070' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.color = '#6b89b4'}
+                                        onMouseLeave={(e) => e.currentTarget.style.color = '#3a5070'}
                                     >
                                         <SkipForward size={20} />
                                     </button>
@@ -507,9 +517,16 @@ export default function FocusPage() {
                                 <div className="mt-6 w-full max-w-xs px-6">
                                     <select
                                         value={selectedTaskId ?? ''}
-                                        onChange={(e) => setSelectedTaskId(e.target.value ? Number(e.target.value) : null)}
+                                        onChange={(e) =>
+                                            setSelectedTaskId(e.target.value ? Number(e.target.value) : null)
+                                        }
                                         disabled={timerState !== 'idle'}
-                                        className="w-full rounded-xl border border-white/5 bg-gray-800 px-4 py-2.5 text-sm text-gray-300 outline-none focus:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="w-full rounded-xl px-4 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                        style={{
+                                            background: 'rgba(15,31,61,0.8)',
+                                            border: '1px solid rgba(99,130,255,0.08)',
+                                            color: '#6b89b4',
+                                        }}
                                     >
                                         <option value="">No task linked</option>
                                         {tasks.map((t) => (
@@ -519,11 +536,14 @@ export default function FocusPage() {
                                 </div>
                             </div>
 
-                            {/* Settings toggle */}
+                            {/* Settings */}
                             <div>
                                 <button
                                     onClick={() => setShowSettings(!showSettings)}
-                                    className="flex items-center gap-2 text-sm text-gray-500 transition hover:text-gray-300"
+                                    className="flex items-center gap-2 text-sm transition"
+                                    style={{ color: '#3a5070' }}
+                                    onMouseEnter={(e) => e.currentTarget.style.color = '#6b89b4'}
+                                    onMouseLeave={(e) => e.currentTarget.style.color = '#3a5070'}
                                 >
                                     <Settings size={14} />
                                     {showSettings ? 'Hide settings' : 'Customize timer'}
@@ -542,22 +562,41 @@ export default function FocusPage() {
                             </div>
                         </div>
 
-                        {/* Stats Column */}
+                        {/* Stats column */}
                         <div className="space-y-4">
 
-                            {/* Today stats */}
-                            <div className="rounded-2xl p-5"
-                                style={{ background: 'rgba(10,22,40,0.8)', border: '1px solid rgba(99,179,255,0.08)' }}
+                            {/* Today */}
+                            <div
+                                className="rounded-2xl p-5"
+                                style={{
+                                    background: 'rgba(10,22,40,0.8)',
+                                    border: '1px solid rgba(99,179,255,0.08)',
+                                }}
                             >
                                 <h3 className="mb-4 text-sm font-semibold text-white">Today</h3>
                                 <div className="space-y-3">
                                     {[
-                                        { label: 'Focus time', value: formatMinutes(stats?.today_minutes ?? 0), icon: <Clock size={14} /> },
-                                        { label: 'Sessions', value: String(stats?.today_sessions ?? 0), icon: <Timer size={14} /> },
-                                        { label: 'Total sessions', value: String(stats?.total_sessions ?? 0), icon: <Flame size={14} /> },
+                                        {
+                                            label: 'Focus time',
+                                            value: formatMinutes(stats?.today_minutes ?? 0),
+                                            icon: <Clock size={14} />,
+                                        },
+                                        {
+                                            label: 'Sessions',
+                                            value: String(stats?.today_sessions ?? 0),
+                                            icon: <Timer size={14} />,
+                                        },
+                                        {
+                                            label: 'Total sessions',
+                                            value: String(stats?.total_sessions ?? 0),
+                                            icon: <Flame size={14} />,
+                                        },
                                     ].map(({ label, value, icon }) => (
                                         <div key={label} className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2 text-sm" style={{ color: '#6b89b4' }}>
+                                            <div
+                                                className="flex items-center gap-2 text-sm"
+                                                style={{ color: '#6b89b4' }}
+                                            >
                                                 <span style={{ color: '#3a5070' }}>{icon}</span>
                                                 {label}
                                             </div>
@@ -567,33 +606,50 @@ export default function FocusPage() {
                                 </div>
                             </div>
 
-                            {/* Weekly bar chart */}
-                            <div className="rounded-2xl p-5"
-                                style={{ background: 'rgba(10,22,40,0.8)', border: '1px solid rgba(99,179,255,0.08)' }}
+                            {/* Weekly chart */}
+                            <div
+                                className="rounded-2xl p-5"
+                                style={{
+                                    background: 'rgba(10,22,40,0.8)',
+                                    border: '1px solid rgba(99,179,255,0.08)',
+                                }}
                             >
                                 <h3 className="mb-4 text-sm font-semibold text-white">This Week</h3>
                                 <div className="flex items-end gap-1.5" style={{ height: 80 }}>
                                     {(stats?.daily ?? []).map((d, i) => {
-                                        const maxMins = Math.max(...(stats?.daily ?? []).map((x) => x.minutes), 1)
+                                        const maxMins = Math.max(
+                                            ...(stats?.daily ?? []).map((x) => x.minutes), 1
+                                        )
                                         const heightPct = (d.minutes / maxMins) * 100
                                         const isToday = i === (stats?.daily ?? []).length - 1
                                         return (
                                             <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                                                <div className="relative w-full rounded-t-sm bg-gray-800" style={{ height: 56 }}>
+                                                <div
+                                                    className="relative w-full rounded-t-sm"
+                                                    style={{ height: 56, background: 'rgba(99,130,255,0.05)' }}
+                                                >
                                                     <motion.div
                                                         initial={{ height: 0 }}
                                                         animate={{ height: `${heightPct}%` }}
                                                         transition={{ duration: 0.6, delay: i * 0.05 }}
-                                                        className={cn(
-                                                            'absolute bottom-0 w-full rounded-t-sm',
-                                                            isToday ? 'bg-indigo-500' : 'bg-indigo-500/40'
-                                                        )}
+                                                        className="absolute bottom-0 w-full rounded-t-sm"
+                                                        style={{
+                                                            background: isToday
+                                                                ? 'linear-gradient(180deg, #6366f1, #3b82f6)'
+                                                                : 'rgba(99,102,241,0.35)',
+                                                            boxShadow: isToday
+                                                                ? '0 0 8px rgba(99,102,241,0.4)'
+                                                                : 'none',
+                                                        }}
                                                     />
                                                 </div>
-                                                <span className={cn(
-                                                    'text-xs',
-                                                    isToday ? 'font-medium text-indigo-400' : 'text-gray-600'
-                                                )}>
+                                                <span
+                                                    className="text-xs"
+                                                    style={{
+                                                        color: isToday ? '#818cf8' : '#3a5070',
+                                                        fontWeight: isToday ? 600 : 400,
+                                                    }}
+                                                >
                                                     {d.date}
                                                 </span>
                                             </div>
@@ -603,12 +659,21 @@ export default function FocusPage() {
                             </div>
 
                             {/* Recent sessions */}
-                            <div className="rounded-2xl p-5"
-                                style={{ background: 'rgba(10,22,40,0.8)', border: '1px solid rgba(99,179,255,0.08)' }}
+                            <div
+                                className="rounded-2xl p-5"
+                                style={{
+                                    background: 'rgba(10,22,40,0.8)',
+                                    border: '1px solid rgba(99,179,255,0.08)',
+                                }}
                             >
-                                <h3 className="mb-4 text-sm font-semibold text-white">Recent Sessions</h3>
+                                <h3 className="mb-4 text-sm font-semibold text-white">
+                                    Recent Sessions
+                                </h3>
                                 {sessions.length === 0 ? (
-                                    <p className="text-center text-xs text-gray-600 py-4">
+                                    <p
+                                        className="py-4 text-center text-xs"
+                                        style={{ color: '#3a5070' }}
+                                    >
                                         No sessions yet
                                     </p>
                                 ) : (
@@ -616,15 +681,29 @@ export default function FocusPage() {
                                         {sessions.slice(0, 5).map((s) => (
                                             <div
                                                 key={s.id}
-                                                className="flex items-center justify-between rounded-xl bg-gray-800/50 px-3 py-2"
+                                                className="flex items-center justify-between rounded-xl px-3 py-2"
+                                                style={{
+                                                    background: 'rgba(15,31,61,0.6)',
+                                                    border: '1px solid rgba(99,130,255,0.06)',
+                                                }}
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <CheckCircle2 size={14} className="text-green-400 shrink-0" />
-                                                    <span className="truncate text-xs text-gray-300 max-w-[120px]">
+                                                    <CheckCircle2
+                                                        size={14}
+                                                        style={{ color: '#34d399' }}
+                                                        className="shrink-0"
+                                                    />
+                                                    <span
+                                                        className="truncate text-xs max-w-[120px]"
+                                                        style={{ color: '#6b89b4' }}
+                                                    >
                                                         {s.task_title ?? 'No task'}
                                                     </span>
                                                 </div>
-                                                <span className="text-xs text-gray-500 shrink-0">
+                                                <span
+                                                    className="text-xs shrink-0"
+                                                    style={{ color: '#3a5070' }}
+                                                >
                                                     {s.duration_minutes}m
                                                 </span>
                                             </div>
