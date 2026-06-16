@@ -218,10 +218,10 @@ export default function DashboardPage() {
     ]
 
     const quickAccess = [
-        { label: 'Add Task', icon: CheckSquare, gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)', to: '/tasks' },
-        { label: 'New Project', icon: FolderKanban, gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)', to: '/projects' },
-        { label: 'Start Focus', icon: Clock, gradient: 'linear-gradient(135deg, #f97316, #fb923c)', to: '/focus' },
-        { label: 'Log Habit', icon: Flame, gradient: 'linear-gradient(135deg, #10b981, #34d399)', to: '/habits' },
+        { label: 'Add Task', gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)', to: '/tasks' },
+        { label: 'New Project', gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)', to: '/projects' },
+        { label: 'Start Focus', gradient: 'linear-gradient(135deg, #f97316, #fb923c)', to: '/focus' },
+        { label: 'Log Habit', gradient: 'linear-gradient(135deg, #10b981, #34d399)', to: '/habits' },
     ]
 
     return (
@@ -338,33 +338,46 @@ export default function DashboardPage() {
                         }}
                     >
                         <h3 className="mb-4 text-sm font-semibold text-white">Quick Access</h3>
-                        <div className="grid grid-cols-2 gap-2.5">
-                            {quickAccess.map(({ label, icon: Icon, gradient, to }) => (
+                        <div className="grid grid-cols-2 gap-4 p-1">
+                            {quickAccess.map(({ label, gradient, to }) => (
                                 <motion.button
                                     key={label}
                                     onClick={() => navigate(to)}
-                                    whileHover={{ scale: 1.03, y: -2 }}
-                                    whileTap={{ scale: 0.97 }}
-                                    className="flex items-center gap-3 rounded-xl p-3 text-left transition-all"
+                                    whileHover={{
+                                        scale: 1.02,
+                                        y: -3,
+                                        transition: { duration: 0.2, ease: "easeOut" }
+                                    }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="group relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 p-6 text-center backdrop-blur-md transition-all duration-300"
                                     style={{
-                                        background: 'rgba(15,31,61,0.6)',
-                                        border: '1px solid rgba(99,179,255,0.06)',
+                                        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
                                     }}
                                     onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = 'rgba(99,130,255,0.2)'
-                                        e.currentTarget.style.background = 'rgba(15,31,61,0.9)'
+                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
                                     }}
                                     onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = 'rgba(99,179,255,0.06)'
-                                        e.currentTarget.style.background = 'rgba(15,31,61,0.6)'
+                                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                                     }}
                                 >
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                                        style={{ background: gradient, boxShadow: `0 0 12px ${gradient.includes('3b82f6') ? 'rgba(59,130,246,0.3)' : 'rgba(99,102,241,0.3)'}` }}
-                                    >
-                                        <Icon size={15} className="text-white" />
-                                    </div>
-                                    <span className="text-xs font-medium" style={{ color: '#6b89b4' }}>{label}</span>
+                                    {/* Dynamic Background Glow on Hover */}
+                                    <div
+                                        className="absolute inset-0 opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-10"
+                                        style={{ background: gradient }}
+                                    />
+
+                                    <div
+
+                                        className="absolute inset-x-0 top-0 h-[2px] opacity-80 transition-opacity group-hover:opacity-100"
+
+                                        style={{ background: gradient }}
+
+                                    />
+
+                                    {/* Button Label - Centered and clean */}
+                                    <span className="relative z-10 text-sm font-semibold tracking-wide text-slate-200 transition-colors duration-300 group-hover:text-white">
+                                        {label}
+                                    </span>
                                 </motion.button>
                             ))}
                         </div>
