@@ -25,7 +25,8 @@ DATABASES = {
 
 # CORS — allow Vercel frontend
 CORS_ALLOWED_ORIGINS = [
-    'https://catalyst-app.vercel.app',  # update after Vercel deploy
+    'https://catalyst-pink.vercel.app',
+    'https://catalyst-h44u7ap47-nss-projects-d2afdf0a.vercel.app',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
