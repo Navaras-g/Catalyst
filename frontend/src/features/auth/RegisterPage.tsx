@@ -55,14 +55,7 @@ export default function RegisterPage() {
         }
     }
 
-    const fields = [
-        {
-            row: [
-                { key: 'first_name', label: 'First name', placeholder: 'John', icon: User, type: 'text' },
-                { key: 'last_name', label: 'Last name', placeholder: 'Doe', icon: User, type: 'text' },
-            ]
-        },
-    ]
+
 
     return (
         <div className="flex h-screen w-full overflow-hidden">

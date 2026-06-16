@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
-    CheckSquare, FolderKanban, Flame, Clock,
+
     ChevronRight, TrendingUp, // Added TrendingUp for the Insights card
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
