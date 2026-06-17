@@ -57,6 +57,3 @@ def setup_focus_signals():
             award_xp(instance.user, 15)
 
 
-setup_task_signals()
-setup_habit_signals()
-setup_focus_signals()

@@ -6,4 +6,16 @@ class UsersConfig(AppConfig):
     name = 'apps.users'
 
     def ready(self):
-        import apps.users.signals  # noqa: F401
+        try:
+            import apps.users.signals  # noqa: F401
+            from apps.users.signals import (
+                setup_task_signals,
+                setup_habit_signals,
+                setup_focus_signals,
+            )
+            setup_task_signals()
+            setup_habit_signals()
+            setup_focus_signals()
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f'Signal setup failed: {e}')
