@@ -130,12 +130,24 @@ class TaskDetailView(APIView):
 
     def patch(self, request, pk):
         task = self.get_object(pk, request.user)
+        old_status = task.status
         serializer = TaskCreateUpdateSerializer(
             task, data=request.data, partial=True,
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        # Award XP if task just became done
+        new_status = request.data.get('status')
+        if new_status == 'done' and old_status != 'done':
+            try:
+                from apps.users.signals import award_xp
+                xp = 25 if task.priority == 'urgent' else 10
+                award_xp(request.user, xp)
+            except Exception:
+                pass
+
         return Response(TaskSerializer(task).data)
 
     def delete(self, request, pk):

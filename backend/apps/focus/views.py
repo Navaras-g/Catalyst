@@ -32,9 +32,19 @@ class FocusSessionDetailView(APIView):
 
     def patch(self, request, pk):
         session = get_object_or_404(FocusSession, pk=pk, user=request.user)
+        was_completed = session.completed
         serializer = FocusSessionSerializer(session, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        # Award XP if session just became completed
+        if not was_completed and session.completed and session.session_type == 'work':
+            try:
+                from apps.users.signals import award_xp
+                award_xp(request.user, 15)
+            except Exception:
+                pass
+
         return Response(serializer.data)
 
 

@@ -63,6 +63,14 @@ class HabitLogView(APIView):
             log.completed = not log.completed
             log.save()
 
+        # Award XP when logging a habit as completed
+        if log.completed:
+            try:
+                from apps.users.signals import award_xp
+                award_xp(habit.user, 5)
+            except Exception:
+                pass
+
         return Response({
             'completed': log.completed,
             'date': log.date,
