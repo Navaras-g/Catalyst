@@ -4,21 +4,76 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion } from 'framer-motion'
-import { Mail, Lock, ArrowRight, Zap } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Zap, Eye, EyeOff } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { authApi } from './authApi'
+
+/* ─── Inter font ─── */
+const fontLink = document.createElement('link')
+fontLink.rel = 'stylesheet'
+fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+document.head.appendChild(fontLink)
 
 const loginSchema = z.object({
     email: z.string().email('Invalid email address'),
     password: z.string().min(1, 'Password is required'),
 })
-
 type LoginForm = z.infer<typeof loginSchema>
+
+/* ─── Reusable input wrapper ─── */
+function Field({
+    label,
+    error,
+    icon,
+    children,
+}: {
+    label: string
+    error?: string
+    icon: React.ReactNode
+    children: React.ReactNode
+}) {
+    return (
+        <div>
+            <label
+                className="mb-2 block text-xs font-semibold uppercase tracking-widest"
+                style={{ color: '#7a9cc4', letterSpacing: '0.08em' }}
+            >
+                {label}
+            </label>
+            <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: '#4a6a90' }}>
+                    {icon}
+                </span>
+                {children}
+            </div>
+            {error && (
+                <motion.p
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-1.5 flex items-center gap-1 text-xs font-medium"
+                    style={{ color: '#f87171' }}
+                >
+                    <span>✕</span> {error}
+                </motion.p>
+            )}
+        </div>
+    )
+}
+
+/* ─── Shared input style fn ─── */
+const inputCls =
+    'w-full rounded-xl py-3.5 pl-11 pr-4 text-sm font-medium outline-none transition-all duration-200 placeholder:font-normal'
+const inputBase = {
+    background: 'rgba(8, 20, 45, 0.85)',
+    border: '1px solid rgba(80, 120, 200, 0.15)',
+    color: '#e2ecff',
+}
 
 export default function LoginPage() {
     const navigate = useNavigate()
     const setUser = useAuthStore((s) => s.setUser)
     const [serverError, setServerError] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
 
     const {
         register,
@@ -42,138 +97,168 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex h-screen w-full overflow-hidden">
-
-            {/* ── Left panel ── */}
+        <div
+            className="flex h-screen w-full overflow-hidden"
+            style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+        >
+            {/* ══ Left panel ══ */}
             <div
-                className="relative hidden lg:flex lg:w-1/2 flex-col items-center justify-center overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, #020818 0%, #0a1628 50%, #0f1f3d 100%)' }}
+                className="relative hidden lg:flex lg:w-[52%] flex-col items-center justify-center overflow-hidden"
+                style={{ background: 'linear-gradient(145deg, #020c1e 0%, #071428 60%, #0c1f40 100%)' }}
             >
-                {/* Image */}
+
                 <div className="absolute inset-0">
                     <img
                         src="/auth-bg.jpg"
                         alt=""
-                        className="h-full w-full object-cover opacity-35"
+                        className="h-full w-full object-cover opacity-60"
                         onError={(e) => (e.currentTarget.style.display = 'none')}
                     />
-                    <div className="absolute inset-0"
+                    <div
+                        className="absolute inset-0"
                         style={{
-                            background: 'linear-gradient(135deg, rgba(2,8,24,0.85) 0%, rgba(10,22,40,0.55) 50%, rgba(15,31,61,0.75) 100%)'
+                            background: 'linear-gradient(135deg, rgba(2,8,24,0.75) 0%, rgba(10,22,40,0.55) 50%, rgba(15,31,61,0.45) 100%)'
                         }}
                     />
                 </div>
 
-                {/* Floating orbs */}
-                <div className="float-orb absolute top-1/4 left-1/4 h-64 w-64 rounded-full opacity-20 blur-3xl"
-                    style={{ background: 'radial-gradient(circle, #3b82f6, transparent)', '--float-duration': '10s' } as any}
+                {/* Glow orbs */}
+                <div
+                    className="absolute top-[20%] left-[15%] h-72 w-72 rounded-full"
+                    style={{
+                        background: 'radial-gradient(circle, rgba(59,130,246,0.18), transparent 70%)',
+                        filter: 'blur(40px)',
+                    }}
                 />
-                <div className="float-orb absolute bottom-1/3 right-1/4 h-48 w-48 rounded-full opacity-15 blur-3xl"
-                    style={{ background: 'radial-gradient(circle, #6366f1, transparent)', '--float-duration': '14s', '--float-delay': '2s' } as any}
+                <div
+                    className="absolute bottom-[20%] right-[10%] h-56 w-56 rounded-full"
+                    style={{
+                        background: 'radial-gradient(circle, rgba(99,102,241,0.16), transparent 70%)',
+                        filter: 'blur(40px)',
+                    }}
                 />
-                <div className="float-orb absolute top-1/2 right-1/3 h-32 w-32 rounded-full opacity-10 blur-2xl"
-                    style={{ background: 'radial-gradient(circle, #a78bfa, transparent)', '--float-duration': '8s', '--float-delay': '4s' } as any}
+
+                {/* Diagonal accent line */}
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        background:
+                            'linear-gradient(135deg, transparent 58%, rgba(59,130,246,0.04) 58%, rgba(99,102,241,0.07) 100%)',
+                    }}
                 />
 
                 {/* Content */}
-                <div className="relative z-10 px-12 text-center">
+                <div className="relative z-10 px-14 text-center select-none">
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
+                        initial={{ opacity: 0, y: 24 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
+                        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                     >
-                        {/* Spinner + Logo */}
-                        <div className="mb-6 flex justify-center">
+                        {/* Animated logo mark */}
+                        <div className="mb-8 flex justify-center">
                             <div className="relative flex items-center justify-center">
-                                {/* Outer slow spin */}
+                                {/* Outer ring */}
                                 <motion.div
                                     animate={{ rotate: 360 }}
-                                    transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-                                    className="absolute h-28 w-28 rounded-full"
+                                    transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-[120px] w-[120px] rounded-full"
                                     style={{
-                                        border: '1px solid transparent',
-                                        borderTopColor: 'rgba(99,130,255,0.6)',
-                                        borderRightColor: 'rgba(99,130,255,0.2)',
-                                        boxShadow: '0 0 20px rgba(99,102,241,0.15)',
+                                        border: '1.5px solid transparent',
+                                        borderTopColor: 'rgba(99,130,255,0.55)',
+                                        borderRightColor: 'rgba(99,130,255,0.15)',
                                     }}
                                 />
-                                {/* Middle counter-spin */}
+                                {/* Inner ring */}
                                 <motion.div
                                     animate={{ rotate: -360 }}
-                                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                                    className="absolute h-20 w-20 rounded-full"
+                                    transition={{ duration: 9, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-[84px] w-[84px] rounded-full"
                                     style={{
-                                        border: '1px solid transparent',
-                                        borderTopColor: 'rgba(139,92,246,0.5)',
-                                        borderLeftColor: 'rgba(139,92,246,0.2)',
+                                        border: '1.5px solid transparent',
+                                        borderTopColor: 'rgba(139,92,246,0.45)',
+                                        borderLeftColor: 'rgba(139,92,246,0.15)',
                                     }}
                                 />
-                                {/* Orbiting dot — outer ring */}
+                                {/* Orbiting dot outer */}
                                 <motion.div
                                     animate={{ rotate: 360 }}
-                                    transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-                                    className="absolute h-28 w-28"
+                                    transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-[120px] w-[120px]"
                                 >
                                     <div
-                                        className="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rounded-full"
+                                        className="absolute -top-[3px] left-1/2 -translate-x-1/2 h-[6px] w-[6px] rounded-full"
                                         style={{
                                             background: '#6366f1',
-                                            boxShadow: '0 0 8px rgba(99,102,241,0.8), 0 0 16px rgba(99,102,241,0.4)',
+                                            boxShadow: '0 0 10px 2px rgba(99,102,241,0.7)',
                                         }}
                                     />
                                 </motion.div>
-                                {/* Orbiting dot — middle ring */}
+                                {/* Orbiting dot inner */}
                                 <motion.div
                                     animate={{ rotate: -360 }}
-                                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                                    className="absolute h-20 w-20"
+                                    transition={{ duration: 9, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute h-[84px] w-[84px]"
                                 >
                                     <div
-                                        className="absolute -top-1 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full"
+                                        className="absolute -top-[3px] left-1/2 -translate-x-1/2 h-[5px] w-[5px] rounded-full"
                                         style={{
                                             background: '#a78bfa',
-                                            boxShadow: '0 0 6px rgba(167,139,250,0.8)',
+                                            boxShadow: '0 0 8px 2px rgba(167,139,250,0.7)',
                                         }}
                                     />
                                 </motion.div>
-                                {/* Center logo */}
+                                {/* Center icon */}
                                 <div
-                                    className="relative flex h-14 w-14 items-center justify-center rounded-xl"
+                                    className="relative flex h-[58px] w-[58px] items-center justify-center rounded-2xl"
                                     style={{
-                                        background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                                        boxShadow: '0 0 30px rgba(99,102,241,0.5)',
+                                        background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+                                        boxShadow: '0 0 36px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
                                     }}
                                 >
-                                    <Zap size={28} className="text-white" />
-                                    <div
-                                        className="absolute inset-0 rounded-xl"
-                                        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.15), transparent)' }}
-                                    />
+                                    <Zap size={26} className="text-white" strokeWidth={2.5} />
                                 </div>
                             </div>
                         </div>
 
-                        <h1 className="gradient-text glow-text mb-4 text-5xl font-bold tracking-tight">
+                        {/* Wordmark */}
+                        <h1
+                            className="mb-3 text-[52px] font-bold tracking-tight"
+                            style={{
+                                background: 'linear-gradient(135deg, #c7d9ff 0%, #a5b8ff 40%, #8b9dff 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                                lineHeight: 1.05,
+                                letterSpacing: '-0.02em',
+                            }}
+                        >
                             Catalyst
                         </h1>
-                        <p className="text-lg leading-relaxed" style={{ color: '#6b89b4' }}>
-                            Your personal productivity universe.<br />
+
+                        <p
+                            className="mb-2 text-[17px] font-semibold tracking-wide"
+                            style={{ color: '#b0c8f0' }}
+                        >
+                            Your personal productivity universe.
+                        </p>
+                        <p className="text-[15px] font-normal" style={{ color: '#b0c8f0' }}>
                             Focus. Build. Achieve.
                         </p>
 
                         {/* Feature pills */}
-                        <div className="mt-8 flex flex-wrap justify-center gap-2">
+                        <div className="mt-10 flex flex-wrap justify-center gap-2">
                             {['Tasks', 'Habits', 'Focus Timer', 'Projects', 'Notes'].map((f, i) => (
                                 <motion.span
                                     key={f}
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.5 + i * 0.1 }}
-                                    className="rounded-full px-3 py-1 text-xs font-medium"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.45 + i * 0.08, duration: 0.5 }}
+                                    className="rounded-full px-4 py-1.5 text-[13px] font-semibold"
                                     style={{
-                                        background: 'rgba(99, 130, 255, 0.1)',
-                                        border: '1px solid rgba(99, 130, 255, 0.2)',
-                                        color: '#93b4ff',
+                                        background: 'rgba(10,20,60,0.55)',
+                                        border: '1px solid rgba(160,190,255,0.35)',
+                                        color: '#d0e2ff',
+                                        letterSpacing: '0.01em',
                                     }}
                                 >
                                     {f}
@@ -182,18 +267,26 @@ export default function LoginPage() {
                         </div>
                     </motion.div>
                 </div>
+
+                {/* Right-edge fade separator */}
+                <div
+                    className="absolute right-0 top-0 h-full w-px"
+                    style={{
+                        background: 'linear-gradient(180deg, transparent, rgba(60,100,210,0.3) 40%, rgba(60,100,210,0.3) 60%, transparent)',
+                    }}
+                />
             </div>
 
-            {/* ── Right panel — form ── */}
+            {/* ══ Right panel ══ */}
             <div
-                className="flex w-full lg:w-1/2 flex-col items-center justify-center px-8"
-                style={{ background: 'linear-gradient(180deg, #020818 0%, #0a1628 100%)' }}
+                className="flex w-full lg:w-[48%] flex-col items-center justify-center px-8"
+                style={{ background: 'linear-gradient(180deg, #020c1e 0%, #061122 100%)' }}
             >
                 <motion.div
-                    initial={{ opacity: 0, x: 30 }}
+                    initial={{ opacity: 0, x: 24 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6 }}
-                    className="w-full max-w-md"
+                    transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                    className="w-full max-w-[420px]"
                 >
                     {/* Mobile logo */}
                     <div className="mb-8 flex items-center gap-3 lg:hidden">
@@ -201,31 +294,56 @@ export default function LoginPage() {
                             className="flex h-10 w-10 items-center justify-center rounded-xl"
                             style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
                         >
-                            <Zap size={20} className="text-white" />
+                            <Zap size={20} className="text-white" strokeWidth={2.5} />
                         </div>
-                        <span className="gradient-text text-2xl font-bold">Catalyst</span>
+                        <span
+                            className="text-2xl font-bold"
+                            style={{
+                                background: 'linear-gradient(135deg, #c7d9ff, #8b9dff)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                            }}
+                        >
+                            Catalyst
+                        </span>
                     </div>
 
+                    {/* Heading */}
                     <div className="mb-8">
-                        <h2 className="text-3xl font-bold text-white">Welcome back</h2>
-                        <p className="mt-2 text-sm" style={{ color: '#6b89b4' }}>
+                        <h2
+                            className="text-[32px] font-bold tracking-tight"
+                            style={{ color: '#eaf0ff', letterSpacing: '-0.02em' }}
+                        >
+                            Welcome back
+                        </h2>
+                        <p className="mt-2 text-[15px] font-normal" style={{ color: '#5a7aa0' }}>
                             Sign in to continue your journey
                         </p>
                     </div>
 
                     {/* Card */}
                     <div
-                        className="gradient-border rounded-2xl p-px"
-                        style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(99,102,241,0.3), rgba(59,130,246,0.1))' }}
+                        className="rounded-2xl p-[1px]"
+                        style={{
+                            background:
+                                'linear-gradient(135deg, rgba(70,120,240,0.35), rgba(99,102,241,0.25), rgba(30,60,120,0.15))',
+                        }}
                     >
-                        <div className="rounded-2xl p-8" style={{ background: '#0a1628' }}>
-
+                        <div
+                            className="rounded-2xl p-8"
+                            style={{ background: '#070f22' }}
+                        >
                             {serverError && (
                                 <motion.div
-                                    initial={{ opacity: 0, y: -8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="mb-5 rounded-xl px-4 py-3 text-sm"
-                                    style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}
+                                    initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    className="mb-5 rounded-xl px-4 py-3 text-sm font-medium"
+                                    style={{
+                                        background: 'rgba(239,68,68,0.08)',
+                                        border: '1px solid rgba(239,68,68,0.25)',
+                                        color: '#fca5a5',
+                                    }}
                                 >
                                     {serverError}
                                 </motion.div>
@@ -233,91 +351,82 @@ export default function LoginPage() {
 
                             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                                 {/* Email */}
-                                <div>
-                                    <label className="mb-2 block text-xs font-medium" style={{ color: '#6b89b4' }}>
-                                        Email address
-                                    </label>
-                                    <div className="relative">
-                                        <Mail size={15} className="absolute left-4 top-3.5" style={{ color: '#3a5070' }} />
-                                        <input
-                                            {...register('email')}
-                                            type="email"
-                                            placeholder="you@example.com"
-                                            className="w-full rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all"
-                                            style={{
-                                                background: 'rgba(15,31,61,0.8)',
-                                                border: '1px solid rgba(99,130,255,0.1)',
-                                                color: '#e8f0fe',
-                                            }}
-                                            onFocus={(e) => e.currentTarget.style.borderColor = 'rgba(99,130,255,0.4)'}
-                                            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(99,130,255,0.1)'}
-                                        />
-                                    </div>
-                                    {errors.email && (
-                                        <p className="mt-1.5 text-xs" style={{ color: '#f87171' }}>{errors.email.message}</p>
-                                    )}
-                                </div>
+                                <Field label="Email address" error={errors.email?.message} icon={<Mail size={15} />}>
+                                    <input
+                                        {...register('email')}
+                                        type="email"
+                                        placeholder="you@example.com"
+                                        className={inputCls}
+                                        style={{ ...inputBase, paddingLeft: '2.75rem' }}
+                                        onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(99,130,255,0.5)')}
+                                        onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(80,120,200,0.15)')}
+                                    />
+                                </Field>
 
                                 {/* Password */}
-                                <div>
-                                    <label className="mb-2 block text-xs font-medium" style={{ color: '#6b89b4' }}>
-                                        Password
-                                    </label>
-                                    <div className="relative">
-                                        <Lock size={15} className="absolute left-4 top-3.5" style={{ color: '#3a5070' }} />
-                                        <input
-                                            {...register('password')}
-                                            type="password"
-                                            placeholder="••••••••"
-                                            className="w-full rounded-xl py-3 pl-11 pr-4 text-sm outline-none transition-all"
-                                            style={{
-                                                background: 'rgba(15,31,61,0.8)',
-                                                border: '1px solid rgba(99,130,255,0.1)',
-                                                color: '#e8f0fe',
-                                            }}
-                                            onFocus={(e) => e.currentTarget.style.borderColor = 'rgba(99,130,255,0.4)'}
-                                            onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(99,130,255,0.1)'}
-                                        />
-                                    </div>
-                                    {errors.password && (
-                                        <p className="mt-1.5 text-xs" style={{ color: '#f87171' }}>{errors.password.message}</p>
-                                    )}
-                                </div>
+                                <Field label="Password" error={errors.password?.message} icon={<Lock size={15} />}>
+                                    <input
+                                        {...register('password')}
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="••••••••"
+                                        className={inputCls}
+                                        style={{ ...inputBase, paddingLeft: '2.75rem', paddingRight: '3rem' }}
+                                        onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(99,130,255,0.5)')}
+                                        onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(80,120,200,0.15)')}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((v) => !v)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors"
+                                        style={{ color: showPassword ? '#6b89b4' : '#3a5070' }}
+                                        tabIndex={-1}
+                                    >
+                                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                    </button>
+                                </Field>
 
                                 {/* Submit */}
                                 <motion.button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl py-3 text-sm font-semibold text-white transition-all"
+                                    whileHover={{ scale: 1.015 }}
+                                    whileTap={{ scale: 0.985 }}
+                                    className="group relative mt-1 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl py-3.5 text-sm font-semibold text-white"
                                     style={{
-                                        background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                                        boxShadow: '0 0 20px rgba(99,102,241,0.3)',
-                                        opacity: isSubmitting ? 0.7 : 1,
+                                        background: isSubmitting
+                                            ? 'linear-gradient(135deg, #2a5fc4, #4a50cc)'
+                                            : 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                                        boxShadow: isSubmitting
+                                            ? 'none'
+                                            : '0 0 24px rgba(99,102,241,0.4), 0 1px 0 rgba(255,255,255,0.1) inset',
+                                        opacity: isSubmitting ? 0.75 : 1,
+                                        letterSpacing: '0.01em',
                                     }}
                                 >
                                     <span
-                                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                                         style={{ background: 'linear-gradient(135deg, #60a5fa, #818cf8)' }}
                                     />
                                     <span className="relative">
-                                        {isSubmitting ? 'Signing in...' : 'Sign in'}
+                                        {isSubmitting ? 'Signing in…' : 'Sign in'}
                                     </span>
                                     {!isSubmitting && (
-                                        <ArrowRight size={16} className="relative transition-transform group-hover:translate-x-1" />
+                                        <ArrowRight
+                                            size={16}
+                                            className="relative transition-transform duration-200 group-hover:translate-x-1"
+                                        />
                                     )}
                                 </motion.button>
                             </form>
                         </div>
                     </div>
 
-                    <p className="mt-6 text-center text-sm" style={{ color: '#3a5070' }}>
+                    <p className="mt-6 text-center text-[14px]" style={{ color: '#2e4a68' }}>
                         Don't have an account?{' '}
                         <Link
                             to="/register"
-                            className="font-medium transition-colors hover:text-blue-400"
-                            style={{ color: '#6b89b4' }}
+                            className="font-semibold transition-colors hover:text-blue-400"
+                            style={{ color: '#5a80b4' }}
                         >
                             Create one
                         </Link>
