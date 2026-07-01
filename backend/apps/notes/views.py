@@ -37,8 +37,14 @@ class NoteListCreateView(APIView):
         serializer = NoteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+        try:
+            from apps.users.signals import award_xp
+            award_xp(request.user, 3)
+        except Exception:
+            pass
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class NoteDetailView(APIView):
     permission_classes = [IsAuthenticated]

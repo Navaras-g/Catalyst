@@ -25,17 +25,23 @@ interface Insight {
     title: string
     description: string
     value: string | null
+    trend: 'up' | 'down' | 'neutral'
 }
 
-const INSIGHT_STYLES: Record<string, { gradient: string; valueColor: string; border: string }> = {
-    peak_day: { gradient: 'rgba(99,102,241,0.08)', valueColor: '#818cf8', border: 'rgba(99,102,241,0.15)' },
-    peak_time: { gradient: 'rgba(59,130,246,0.08)', valueColor: '#60a5fa', border: 'rgba(59,130,246,0.15)' },
-    estimation: { gradient: 'rgba(249,115,22,0.08)', valueColor: '#fb923c', border: 'rgba(249,115,22,0.15)' },
-    focus_impact: { gradient: 'rgba(139,92,246,0.08)', valueColor: '#a78bfa', border: 'rgba(139,92,246,0.15)' },
-    habit_pattern: { gradient: 'rgba(249,115,22,0.08)', valueColor: '#fb923c', border: 'rgba(249,115,22,0.15)' },
-    consistency: { gradient: 'rgba(16,185,129,0.08)', valueColor: '#34d399', border: 'rgba(16,185,129,0.15)' },
-    warning: { gradient: 'rgba(239,68,68,0.08)', valueColor: '#f87171', border: 'rgba(239,68,68,0.15)' },
-    info: { gradient: 'rgba(99,130,255,0.05)', valueColor: '#6b89b4', border: 'rgba(99,130,255,0.08)' },
+const TREND_CONFIG = {
+    up: { color: '#34d399', bg: 'rgba(16,185,129,0.08)', arrow: '↑' },
+    down: { color: '#f87171', bg: 'rgba(239,68,68,0.08)', arrow: '↓' },
+    neutral: { color: '#6b89b4', bg: 'rgba(99,130,255,0.06)', arrow: '→' },
+}
+
+const TYPE_CONFIG: Record<string, { accent: string; bar: string }> = {
+    peak_day: { accent: '#6366f1', bar: 'linear-gradient(90deg, #6366f1, #8b5cf6)' },
+    peak_time: { accent: '#3b82f6', bar: 'linear-gradient(90deg, #3b82f6, #6366f1)' },
+    focus_impact: { accent: '#8b5cf6', bar: 'linear-gradient(90deg, #8b5cf6, #6366f1)' },
+    habit_pattern: { accent: '#f97316', bar: 'linear-gradient(90deg, #f97316, #fb923c)' },
+    consistency: { accent: '#10b981', bar: 'linear-gradient(90deg, #10b981, #34d399)' },
+    warning: { accent: '#ef4444', bar: 'linear-gradient(90deg, #ef4444, #f87171)' },
+    info: { accent: '#6b89b4', bar: 'linear-gradient(90deg, #6b89b4, #93b4d4)' },
 }
 
 function getGreeting() {
@@ -108,19 +114,26 @@ function InsightsCard() {
             className="rounded-2xl p-5"
             style={{
                 background: 'rgba(10,22,40,0.8)',
-                border: '1px solid rgba(99,179,255,0.08)',
+                border: '1px solid rgba(99,179,255,0.08)'
             }}
         >
-            <div className="mb-4 flex items-center gap-2.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg"
-                    style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
-                >
-                    <TrendingUp size={14} className="text-white" />
+            {/* Header */}
+            <div className="mb-5 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                    <div
+                        className="flex h-7 w-7 items-center justify-center rounded-lg"
+                        style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
+                    >
+                        <TrendingUp size={14} className="text-white" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-white">
+                        Productivity Insights
+                    </h3>
                 </div>
-                <h3 className="text-sm font-semibold text-white">Productivity Insights</h3>
-                <span className="ml-auto rounded-full px-2 py-0.5 text-xs"
+                <span
+                    className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
                     style={{
-                        background: 'rgba(99,102,241,0.1)',
+                        background: 'rgba(99,102,241,0.12)',
                         color: '#818cf8',
                         border: '1px solid rgba(99,102,241,0.2)',
                     }}
@@ -134,35 +147,60 @@ function InsightsCard() {
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
                 </div>
             ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                     {insights.map((insight, i) => {
-                        const style = INSIGHT_STYLES[insight.type] ?? INSIGHT_STYLES.info
+                        const typeConfig = TYPE_CONFIG[insight.type] ?? TYPE_CONFIG.info
+                        const trendConfig = TREND_CONFIG[insight.trend ?? 'neutral']
+
                         return (
                             <motion.div
                                 key={i}
-                                initial={{ opacity: 0, x: -10 }}
+                                initial={{ opacity: 0, x: -8 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.9 + i * 0.08 }}
-                                className="flex items-start gap-3 rounded-xl p-3"
+                                className="relative overflow-hidden rounded-xl p-4"
                                 style={{
-                                    background: style.gradient,
-                                    border: `1px solid ${style.border}`,
+                                    background: 'rgba(15,31,61,0.5)',
+                                    border: '1px solid rgba(99,179,255,0.08)',
                                 }}
                             >
-                                {insight.value && (
-                                    <div className="shrink-0 text-right">
-                                        <span className="text-lg font-bold"
-                                            style={{ color: style.valueColor }}
-                                        >
-                                            {insight.value}
-                                        </span>
+                                {/* Left accent bar */}
+                                <div
+                                    className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl"
+                                    style={{ background: typeConfig.bar }}
+                                />
+
+                                <div className="flex items-start gap-4 pl-2">
+                                    {/* Value + trend */}
+                                    {insight.value && (
+                                        <div className="shrink-0 text-center min-w-[52px]">
+                                            <p
+                                                className="text-lg font-extrabold leading-none tracking-tight"
+                                                style={{ color: typeConfig.accent }}
+                                            >
+                                                {insight.value}
+                                            </p>
+                                            <div
+                                                className="mt-1 flex items-center justify-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium"
+                                                style={{
+                                                    background: trendConfig.bg,
+                                                    color: trendConfig.color,
+                                                }}
+                                            >
+                                                <span>{trendConfig.arrow}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Text */}
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-semibold leading-tight text-white">
+                                            {insight.title}
+                                        </p>
+                                        <p className="mt-1 text-xs leading-relaxed" style={{ color: '#6b89b4' }}>
+                                            {insight.description}
+                                        </p>
                                     </div>
-                                )}
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-semibold text-white">{insight.title}</p>
-                                    <p className="mt-0.5 text-xs leading-relaxed" style={{ color: '#6b89b4' }}>
-                                        {insight.description}
-                                    </p>
                                 </div>
                             </motion.div>
                         )
