@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, Count
 
 
 class DashboardStatsView(APIView):
@@ -29,8 +29,7 @@ class DashboardStatsView(APIView):
         ).count()
 
         active_projects = Project.objects.filter(
-            user=user,
-            status='active'
+            user=user, status='active'
         ).count()
 
         focus_today = FocusSession.objects.filter(
@@ -41,12 +40,10 @@ class DashboardStatsView(APIView):
         ).aggregate(total=Sum('duration_minutes'))['total'] or 0
 
         habits = Habit.objects.filter(
-            user=user,
-            is_active=True
+            user=user, is_active=True
         ).prefetch_related('logs')
 
         total_habits = habits.count()
-
         completed_habits_today = sum(
             1 for h in habits
             if h.logs.filter(date=today, completed=True).exists()
@@ -61,6 +58,28 @@ class DashboardStatsView(APIView):
                 day -= timezone.timedelta(days=1)
             max_streak = max(max_streak, streak)
 
+        # ── Daily chart data — last 7 days ────────────────────────────────────
+        daily = []
+        for i in range(6, -1, -1):
+            day = today - timezone.timedelta(days=i)
+            tasks_done = tasks.filter(
+                status='done',
+                updated_at__date=day,
+            ).count()
+            focus_mins = FocusSession.objects.filter(
+                user=user,
+                session_type='work',
+                completed=True,
+                started_at__date=day,
+            ).aggregate(total=Sum('duration_minutes'))['total'] or 0
+
+            daily.append({
+                'date': day.strftime('%a'),
+                'tasks': tasks_done,
+                'focus_minutes': focus_mins,
+                'focus_hours': round(focus_mins / 60, 1),
+            })
+
         return Response({
             'tasks_due_today': tasks_due_today,
             'tasks_completed_this_week': tasks_completed_this_week,
@@ -69,6 +88,7 @@ class DashboardStatsView(APIView):
             'total_focus_minutes_today': focus_today,
             'habits_completed_today': completed_habits_today,
             'habits_total': total_habits,
+            'daily': daily,
         })
 
 class CalendarView(APIView):

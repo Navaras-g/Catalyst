@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import {
-
-    ChevronRight, TrendingUp, // Added TrendingUp for the Insights card
-} from 'lucide-react'
+import { ChevronRight, TrendingUp } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import apiClient from '@/api/client'
 import Header from '@/components/layout/Header'
 import { useNavigate } from 'react-router-dom'
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid,
+    Tooltip, ResponsiveContainer,
+} from 'recharts'
 
 interface DashboardStats {
     tasks_due_today: number
@@ -17,6 +18,12 @@ interface DashboardStats {
     total_focus_minutes_today: number
     habits_completed_today: number
     habits_total: number
+    daily: {
+        date: string
+        tasks: number
+        focus_minutes: number
+        focus_hours: number
+    }[]
 }
 
 interface Insight {
@@ -405,11 +412,8 @@ export default function DashboardPage() {
                                     />
 
                                     <div
-
                                         className="absolute inset-x-0 top-0 h-[2px] opacity-80 transition-opacity group-hover:opacity-100"
-
                                         style={{ background: gradient }}
-
                                     />
 
                                     {/* Button Label - Centered and clean */}
@@ -422,7 +426,7 @@ export default function DashboardPage() {
                     </motion.div>
                 </div>
 
-                {/* Weekly chart */}
+                {/* Activity Chart */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -433,8 +437,13 @@ export default function DashboardPage() {
                         border: '1px solid rgba(99,179,255,0.08)',
                     }}
                 >
-                    <div className="flex items-center justify-between mb-5">
-                        <h3 className="text-sm font-semibold text-white">This Week</h3>
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-sm font-semibold text-white">Weekly Activity</h3>
+                            <p className="text-xs mt-0.5" style={{ color: '#3a5070' }}>
+                                Tasks completed vs focus hours
+                            </p>
+                        </div>
                         <button
                             onClick={() => navigate('/calendar')}
                             className="flex items-center gap-1 text-xs transition-colors"
@@ -445,43 +454,127 @@ export default function DashboardPage() {
                             View calendar <ChevronRight size={12} />
                         </button>
                     </div>
-                    <div className="flex items-end gap-1.5 h-20">
-                        {Array.from({ length: 7 }).map((_, i) => {
-                            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                            const today = new Date().getDay()
-                            const adjustedToday = today === 0 ? 6 : today - 1
-                            const isToday = i === adjustedToday
-                            const isPast = i < adjustedToday
-                            const heightPct = isPast ? Math.floor(Math.random() * 60) + 20 : isToday ? 45 : 8
-                            return (
-                                <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
-                                    <div className="relative w-full rounded-t overflow-hidden"
-                                        style={{ height: '56px', background: 'rgba(99,130,255,0.05)' }}
-                                    >
-                                        <motion.div
-                                            initial={{ height: 0 }}
-                                            animate={{ height: `${heightPct}%` }}
-                                            transition={{ duration: 0.7, delay: 0.8 + i * 0.06, ease: 'easeOut' }}
-                                            className="absolute bottom-0 w-full rounded-t"
-                                            style={{
-                                                background: isToday
-                                                    ? 'linear-gradient(180deg, #6366f1, #3b82f6)'
-                                                    : isPast
-                                                        ? 'linear-gradient(180deg, rgba(99,102,241,0.5), rgba(59,130,246,0.3))'
-                                                        : 'rgba(99,130,255,0.08)',
-                                                boxShadow: isToday ? '0 0 12px rgba(99,102,241,0.4)' : 'none',
-                                            }}
-                                        />
-                                    </div>
-                                    <span className="text-xs"
-                                        style={{ color: isToday ? '#818cf8' : '#3a5070', fontWeight: isToday ? 600 : 400 }}
-                                    >
-                                        {days[i]}
-                                    </span>
-                                </div>
-                            )
-                        })}
+
+                    {/* Legend */}
+                    <div className="flex items-center gap-5 mb-4">
+                        <div className="flex items-center gap-2">
+                            <div className="h-2 w-6 rounded-full"
+                                style={{ background: 'linear-gradient(90deg, #6366f1, #8b5cf6)' }}
+                            />
+                            <span className="text-xs" style={{ color: '#6b89b4' }}>Tasks</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="h-2 w-6 rounded-full"
+                                style={{ background: 'linear-gradient(90deg, #06b6d4, #3b82f6)' }}
+                            />
+                            <span className="text-xs" style={{ color: '#6b89b4' }}>Focus (hrs)</span>
+                        </div>
                     </div>
+
+                    <ResponsiveContainer width="100%" height={200}>
+                        <AreaChart
+                            data={stats?.daily ?? []}
+                            margin={{ top: 8, right: 8, left: -28, bottom: 0 }}
+                        >
+                            <defs>
+                                <linearGradient id="tasksGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="focusGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="rgba(99,130,255,0.06)"
+                                vertical={false}
+                            />
+
+                            <XAxis
+                                dataKey="date"
+                                tick={{ fill: '#3a5070', fontSize: 11 }}
+                                axisLine={false}
+                                tickLine={false}
+                            />
+
+                            <YAxis
+                                tick={{ fill: '#3a5070', fontSize: 11 }}
+                                axisLine={false}
+                                tickLine={false}
+                                allowDecimals={false}
+                            />
+
+                            <Tooltip
+                                contentStyle={{
+                                    background: 'rgba(10,22,40,0.95)',
+                                    border: '1px solid rgba(99,130,255,0.15)',
+                                    borderRadius: '12px',
+                                    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                                    padding: '10px 14px',
+                                }}
+                                labelStyle={{
+                                    color: '#e8f0fe',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    marginBottom: '4px',
+                                }}
+                                itemStyle={{
+                                    color: '#6b89b4',
+                                    fontSize: '12px',
+                                    padding: '2px 0',
+                                }}
+                                formatter={(value: number, name: string) => {
+                                    if (name === 'tasks') return [`${value} tasks`, 'Tasks']
+                                    return [`${value}h`, 'Focus']
+                                }}
+                                cursor={{
+                                    stroke: 'rgba(99,130,255,0.15)',
+                                    strokeWidth: 1,
+                                }}
+                            />
+
+                            <Area
+                                type="monotone"
+                                dataKey="tasks"
+                                stroke="#6366f1"
+                                strokeWidth={2}
+                                fill="url(#tasksGradient)"
+                                dot={{
+                                    fill: '#6366f1',
+                                    strokeWidth: 0,
+                                    r: 3,
+                                }}
+                                activeDot={{
+                                    fill: '#818cf8',
+                                    stroke: 'rgba(99,102,241,0.3)',
+                                    strokeWidth: 4,
+                                    r: 5,
+                                }}
+                            />
+
+                            <Area
+                                type="monotone"
+                                dataKey="focus_hours"
+                                stroke="#06b6d4"
+                                strokeWidth={2}
+                                fill="url(#focusGradient)"
+                                dot={{
+                                    fill: '#06b6d4',
+                                    strokeWidth: 0,
+                                    r: 3,
+                                }}
+                                activeDot={{
+                                    fill: '#22d3ee',
+                                    stroke: 'rgba(6,182,212,0.3)',
+                                    strokeWidth: 4,
+                                    r: 5,
+                                }}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
                 </motion.div>
 
                 {/* Insights — after the weekly chart */}
